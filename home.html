@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIUL PKU - Dashboard</title>
+    
+    <meta name="theme-color" content="#0d6efd">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tom-select/2.2.2/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+    
+    <style>
+        body { 
+            background-color: #f4f6f9; 
+            font-family: 'Segoe UI', sans-serif; 
+            padding-top: 80px; 
+        }
+        
+        .navbar-brand { font-weight: bold; letter-spacing: 1px; }
+        .nav-link { font-weight: 500; transition: all 0.2s; cursor: pointer; }
+        .nav-link.active { font-weight: 700; color: #fff !important; text-decoration: underline; text-underline-offset: 5px;}
+
+        #loadingOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.95); z-index: 99999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+
+        .signature-pad { border: 2px dashed #ced4da; background: #fff; cursor: crosshair; width: 100%; border-radius: 6px; display: block; touch-action: none; }
+        .asset-thumb { width: 50px; height: 50px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 1px solid #dee2e6; }
+        .cursor-pointer { cursor: pointer; }
+        .hover-shadow:hover { box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important; transition: 0.3s; }
+
+        @media print {
+            body * { visibility: hidden; }
+            #printArea, #printArea * { visibility: visible; }
+            #printArea { display: block !important; position: absolute; left: 0; top: 0; width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="loadingOverlay">
+    <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status"></div>
+    <p class="mt-3 fw-bold text-dark">Memuat Data...</p>
+    <small class="text-danger" id="errorMsg" style="display:none">Koneksi bermasalah.</small>
+</div>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top shadow-sm">
+    <div class="container">
+        <a class="navbar-brand" href="#"><i class="bi bi-shield-check me-2"></i>SIUL PKU</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto align-items-lg-center">
+                <li class="nav-item">
+                    <a class="nav-link active" onclick="app.nav('dashboard', event)"><i class="bi bi-grid-1x2-fill me-1"></i> Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="app.nav('database', event)"><i class="bi bi-database-fill me-1"></i> Database</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="app.nav('inspection', event)"><i class="bi bi-clipboard-check-fill me-1"></i> Uji Laik Baru</a>
+                </li>
+                <li class="nav-item ms-lg-3 mt-2 mt-lg-0">
+                    <button class="btn btn-danger btn-sm px-3 fw-bold w-100" onclick="app.logout()">
+                        <i class="bi bi-box-arrow-right me-1"></i> Keluar
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container pb-5">
+
+    <div id="page-dashboard">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="fw-bold text-secondary">Rekapitulasi</h4>
+            <button class="btn btn-outline-primary shadow-sm" onclick="app.loadDashboard()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+        </div>
+        <div class="card shadow-sm border-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4 py-3">Tanggal</th>
+                            <th>Aset / Unit</th>
+                            <th>Status</th>
+                            <th>Inspektor</th>
+                            <th class="text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recapTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="page-database" class="d-none">
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+            <h4 class="fw-bold text-secondary mb-0">Database Kendaraan/GSE</h4>
+            <div class="d-flex gap-2">
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
+                    <input type="text" id="assetSearchInput" class="form-control border-start-0" placeholder="Cari Nama/Plat/GSE..." onkeyup="app.filterAssets(this.value)">
+                </div>
+                <button class="btn btn-primary shadow-sm text-nowrap" onclick="app.showAssetModal()"><i class="bi bi-plus-lg"></i> Tambah Unit</button>
+            </div>
+        </div>
+        <div class="card shadow-sm border-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4 py-3">Foto</th>
+                            <th>Jenis & Nama</th>
+                            <th>Detail (Plat/No GSE)</th>
+                            <th>Pemilik/BBM</th>
+                            <th class="text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="assetTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="page-inspection" class="d-none">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-primary text-white py-3">
+                        <h5 class="mb-0 fw-bold"><i class="bi bi-file-earmark-check me-2"></i>Formulir Uji Laik</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <form id="inspectionForm">
+                            <input type="hidden" id="editInspectionId">
+                            
+                            <div class="row mb-4 g-3">
+                                <div class="col-md-7">
+                                    <label class="form-label fw-bold">Pilih Kendaraan/GSE</label>
+                                    <select id="selectAsset" class="form-select" required></select>
+                                </div>
+                                <div class="col-md-5">
+                                    <label class="form-label fw-bold">Tanggal Uji</label>
+                                    <input type="date" id="testDate" class="form-control" required>
+                                </div>
+                            </div>
+
+                            <div class="alert alert-light border d-flex align-items-center mb-4 shadow-sm">
+                                <div class="me-3" id="assetPhotoPreviewForm">
+                                    <div class="bg-secondary text-white rounded d-flex align-items-center justify-content-center" style="width:60px; height:60px;">
+                                        <i class="bi bi-image fs-4"></i>
+                                    </div>
+                                </div>
+                                <div>
+                                    <small id="assetDetailInfo" class="mb-0 text-muted fw-bold">Silakan pilih aset untuk melihat detail...</small>
+                                </div>
+                            </div>
+
+                            <h6 class="fw-bold border-bottom pb-2 mb-3 text-primary">Item Pemeriksaan (Checklist)</h6>
+                            <div class="row g-2" id="checklistContainer"></div>
+                            <hr class="my-4">
+
+                            <div class="mb-4">
+                                <label class="form-label fw-bold h6">Hasil Akhir Pengujian:</label>
+                                <div class="d-flex gap-3 mt-2">
+                                    <div class="form-check flex-fill p-3 border rounded bg-light text-center cursor-pointer hover-shadow">
+                                        <input class="form-check-input float-none me-2" type="radio" name="finalResult" id="resFail" value="Pending" checked onchange="app.toggleSignatures()">
+                                        <label class="form-check-label text-danger fw-bold d-block mt-1 cursor-pointer" for="resFail">TIDAK MEMENUHI (Pending)</label>
+                                    </div>
+                                    <div class="form-check flex-fill p-3 border rounded bg-light text-center cursor-pointer hover-shadow">
+                                        <input class="form-check-input float-none me-2" type="radio" name="finalResult" id="resPass" value="Lulus" onchange="app.toggleSignatures()">
+                                        <label class="form-check-label text-success fw-bold d-block mt-1 cursor-pointer" for="resPass">MEMENUHI</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="signatureSection" class="d-none bg-light p-4 rounded border mb-4 shadow-sm">
+                                <h6 class="text-center fw-bold mb-4 text-uppercase text-secondary">Pengesahan Inspektor</h6>
+                                <div class="row text-center g-3">
+                                    <div class="col-md-4">
+                                        <div class="card p-3 h-100 shadow-sm border-0">
+                                            <label class="fw-bold mb-2 small text-uppercase">AE</label>
+                                            <input type="text" id="inspNameEME" class="form-control form-control-sm mb-2 text-center" placeholder="Nama">
+                                            <canvas id="sigEME" class="signature-pad" height="150"></canvas>
+                                            <button type="button" class="btn btn-sm btn-outline-danger mt-2 w-100" onclick="app.clearSig('sigEME')">Hapus</button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="card p-3 h-100 shadow-sm border-0">
+                                            <label class="fw-bold mb-2 small text-uppercase">ARFF</label>
+                                            <input type="text" id="inspNameARFF" class="form-control form-control-sm mb-2 text-center" placeholder="Nama">
+                                            <canvas id="sigARFF" class="signature-pad" height="150"></canvas>
+                                            <button type="button" class="btn btn-sm btn-outline-danger mt-2 w-100" onclick="app.clearSig('sigARFF')">Hapus</button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="card p-3 h-100 shadow-sm border-0">
+                                            <label class="fw-bold mb-2 small text-uppercase">AMC</label>
+                                            <input type="text" id="inspNameAMC" class="form-control form-control-sm mb-2 text-center" placeholder="Nama">
+                                            <canvas id="sigAMC" class="signature-pad" height="150"></canvas>
+                                            <button type="button" class="btn btn-sm btn-outline-danger mt-2 w-100" onclick="app.clearSig('sigAMC')">Hapus</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-end gap-2">
+                                <button type="button" class="btn btn-light px-4" onclick="app.nav('dashboard', event)">Batal</button>
+                                <button type="submit" id="btnSubmitInspection" class="btn btn-success px-5 fw-bold shadow-sm">Simpan Data</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="assetModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="assetModalTitle">Registrasi Aset</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="assetForm">
+                    <input type="hidden" id="editAssetId">
+                    <input type="hidden" id="existingPhotoUrl">
+                    <div class="text-center mb-4 p-3 bg-light rounded border">
+                        <img id="imgPreview" src="https://via.placeholder.com/150?text=No+Image" class="rounded border shadow-sm" style="width: 150px; height: 150px; object-fit: cover;">
+                        <div class="mt-3">
+                            <label class="btn btn-sm btn-outline-primary shadow-sm"><i class="bi bi-camera"></i> Upload Foto<input type="file" id="astPhoto" class="d-none" accept="image/*" onchange="app.previewFile()"></label>
+                        </div>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Pemilik</label>
+                            <select id="astOwner" class="form-select" required>
+                                <option value="">-- Pilih Pemilik --</option>
+                                <option value="PT. Gapura Angkasa">PT. Gapura Angkasa</option>
+                                <option value="PT. Mora Sanel Lestari">PT. Mora Sanel Lestari</option>
+                                <option value="PT. Prathita Titiannusantara">PT. Prathita Titiannusantara</option>
+                                <option value="PT. Garuda Maintenance Facility Aeroasia">PT. Garuda Maintenance Facility Aeroasia</option>
+                                <option value="LION GROUP">LION GROUP</option>
+                                <option value="Batam Aero Teknik">Batam Aero Teknik</option>
+                                <option value="PT. Parewa Citra Katering">PT. Parewa Citra Katering</option>
+                                <option value="PT. Prima Transportasi Servis Indonesia">PT. Prima Transportasi Servis Indonesia</option>
+                                <option value="PT. Gajayana Makmur Sejati">PT. Gajayana Makmur Sejati</option>
+                                <option value="PT. Injourney Airport Services">PT. Injourney Airport Services</option>
+                                <option value="Angkasa Pura Kargo">Angkasa Pura Kargo</option>
+                                <option value="Angkasa Pura Solusi">Angkasa Pura Solusi</option>
+                                <option value="Pemprov Riau">Pemprov Riau</option>
+                                <option value="Imigrasi">Imigrasi</option>
+                                <option value="Bea Cukai">Bea Cukai</option>
+                                <option value="Balai Karantina Kesehatan (KKP)">Balai Karantina Kesehatan (KKP)</option>
+                                <option value="Pertamina Patra Niaga">Pertamina Patra Niaga</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6"><label class="form-label small fw-bold">Jenis</label><select id="astType" class="form-select"><option value="Motorized">Motorized</option><option value="Non-Motorized">Non-Motorized</option></select></div>
+                        <div class="col-md-6"><label class="form-label small fw-bold">Nama Aset</label><input type="text" id="astName" class="form-control" required></div>
+                        <div class="col-md-6"><label class="form-label small fw-bold">Bahan Bakar</label><select id="astFuel" class="form-select"><option value="-">-</option><option value="Bensin">Bensin</option><option value="Solar">Solar</option><option value="Listrik">Listrik</option></select></div>
+                        <div class="col-md-6"><label class="form-label small fw-bold">No. Polisi</label><input type="text" id="astPlate" class="form-control"></div>
+                        <div class="col-md-6"><label class="form-label small fw-bold">No. GSE</label><input type="text" id="astGseNo" class="form-control" required></div>
+                        <div class="col-md-6"><label class="form-label small fw-bold">Dimensi</label><input type="text" id="astDim" class="form-control"></div>
+                        <div class="col-md-6"><label class="form-label small fw-bold">Fungsi</label><input type="text" id="astUsage" class="form-control" required></div>
+                    </div>
+                    <div class="text-end mt-4">
+                        <button type="submit" id="btnSaveAsset" class="btn btn-primary px-4 shadow-sm">Simpan Aset</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="historyModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title fw-bold"><i class="bi bi-clock-history"></i> Riwayat Uji Laik</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-4 border-bottom pb-3">
+                    <div class="col-md-8">
+                        <h5 class="fw-bold mb-3 text-secondary">Detail Kendaraan</h5>
+                        <table class="table table-sm table-borderless small">
+                            <tr><td width="120">Nama Aset</td><td class="fw-bold" id="hist_name">-</td></tr>
+                            <tr><td>No GSE</td><td class="fw-bold" id="hist_gse">-</td></tr>
+                            <tr><td>Jenis</td><td id="hist_type">-</td></tr>
+                            <tr><td>Pemilik</td><td id="hist_owner">-</td></tr>
+                            <tr><td>Bahan Bakar</td><td id="hist_fuel">-</td></tr>
+                        </table>
+                    </div>
+                    <div class="col-md-4 text-center border-start d-flex flex-col justify-content-center align-items-center">
+                        <div id="qrcode" class="p-2 border bg-white rounded"></div>
+                        <small class="d-block mt-2 text-muted" style="font-size: 10px;">Scan untuk akses riwayat</small>
+                    </div>
+                </div>
+
+                <h6 class="fw-bold text-secondary">Daftar Hasil Uji</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered table-striped">
+                        <thead class="table-light"><tr><th>Tanggal</th><th>Status</th><th class="text-center">Cetak</th></tr></thead>
+                        <tbody id="historyTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="printArea" class="d-none"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tom-select/2.2.2/js/tom-select.complete.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<script>
+    const SB_URL = 'https://fusjhnckcwmaybrzczcq.supabase.co';
+    const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1c2pobmNrY3dtYXlicnpjemNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYxNDUwOTYsImV4cCI6MjA4MTcyMTA5Nn0.YUxghOhHimUJe92Cf4gyeKGlaZ4qyCkHWuISSlrSHrE';
+    const BUCKET = 'assets-photos';
+    
+    const CHECKLIST_ITEMS = [ 
+        "Kondisi Kabel/Pengapian", "Kondisi Lampu/Rotary", "Kondisi Rem/ Rem Tangan", 
+        "Kondisi Ban / Roda", "Tameng Manifold", "Saringan Karburator", 
+        "Battrey / Accu", "Busi atau injector", "Dinamo Starter", 
+        "Tombol Listrik", "Pemadam Api Portable", "Tidak ada kobocoran BBM/Oli", 
+        "Cat Kendaraan/GSE", "Kondisi GSE", "Pengamanan GSE", 
+        "Pipa/Saluran/Selang", "Saringan Knalpot (Flame Trap)", 
+        "Tanda Dilarang Merokok", "Logo Perusahaan" 
+    ];
+
+    const app = {
+        sb: null,
+        cachedAssets: [],
+        canvases: {},
+        tomSelect: null,
+        
+        init: async function() {
+            try {
+                if(typeof supabase === 'undefined') throw new Error("Library Supabase gagal dimuat.");
+                
+                this.sb = window.supabase.createClient(SB_URL, SB_KEY);
+                
+                // --- PENGECEKAN SESI LOGIN ---
+                await this.checkSession();
+                // -----------------------------
+
+                this.setupEvents();
+                
+                const params = new URLSearchParams(window.location.search);
+                const historyId = params.get('history_id');
+
+                if (historyId) {
+                    this.nav('database'); 
+                    setTimeout(() => {
+                        this.showHistory(historyId);
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                    }, 1500); 
+                } else {
+                    this.nav('dashboard');
+                }
+                
+            } catch (e) {
+                document.getElementById('errorMsg').style.display = 'block';
+                document.getElementById('errorMsg').innerText = e.message;
+            }
+        },
+
+        // FUNGSI CEK SESSION
+        checkSession: async function() {
+            const { data: { session } } = await this.sb.auth.getSession();
+            if (!session) {
+                // Jika tidak ada session, lempar kembali ke login
+                window.location.href = 'index.html';
+            }
+        },
+
+        // FUNGSI LOGOUT
+        logout: async function() {
+            if(confirm("Apakah Anda yakin ingin keluar?")) {
+                await this.sb.auth.signOut();
+                window.location.href = 'index.html';
+            }
+        },
+
+        setupEvents: function() {
+            document.getElementById('assetForm').onsubmit = (e) => this.submitAsset(e);
+            document.getElementById('inspectionForm').onsubmit = (e) => this.submitInspection(e);
+            
+            window.addEventListener('resize', () => {
+                if(!document.getElementById('signatureSection').classList.contains('d-none')) {
+                   this.initCanvas('sigEME'); this.initCanvas('sigARFF'); this.initCanvas('sigAMC'); 
+                }
+            });
+        },
+
+        nav: function(page, evt) {
+            if(evt) evt.preventDefault();
+            document.querySelectorAll('[id^="page-"]').forEach(el => el.classList.add('d-none'));
+            document.getElementById(`page-${page}`).classList.remove('d-none');
+            document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+            if(evt && evt.target) {
+                const link = evt.target.closest('.nav-link');
+                if(link) link.classList.add('active');
+            } else {
+                const links = document.querySelectorAll('.nav-link');
+                if(page === 'dashboard') links[0].classList.add('active');
+                if(page === 'database') links[1].classList.add('active');
+                if(page === 'inspection') links[2].classList.add('active');
+            }
+            
+            const navCollapse = document.getElementById('navbarNav');
+            if(navCollapse.classList.contains('show')) new bootstrap.Collapse(navCollapse).hide();
+
+            if(page === 'dashboard') this.loadDashboard();
+            if(page === 'database') this.loadAssetsTable(); 
+            if(page === 'inspection') {
+                if(!document.getElementById('editInspectionId').value) {
+                    this.resetForm(); 
+                    this.loadAssetSelect();
+                }
+            }
+        },
+
+        loadDashboard: async function() {
+            this.loading(true);
+            try {
+                const { data, error } = await this.sb.from('inspections').select('*, assets(*)').order('date', {ascending: false});
+                if(error) throw error;
+
+                const tbody = document.getElementById('recapTableBody');
+                if (!data || data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center p-4 text-muted">Belum ada data.</td></tr>';
+                } else {
+                    tbody.innerHTML = '';
+                    data.forEach(insp => {
+                        const asset = insp.assets || { name: 'Unit Terhapus', gse_no: '-' };
+                        const isPass = insp.status === 'Lulus';
+                        const badge = isPass ? 'bg-success' : 'bg-warning text-dark';
+                        const btnEdit = !isPass ? `<button class="btn btn-sm btn-outline-warning" onclick="app.editInspection('${insp.id}')"><i class="bi bi-pencil"></i></button>` : '';
+                        
+                        tbody.innerHTML += `
+                            <tr>
+                                <td class="ps-4 fw-bold">${insp.date}</td>
+                                <td>${asset.name}<br><small class="text-muted">${asset.gse_no}</small></td>
+                                <td><span class="badge ${badge}">${insp.status}</span></td>
+                                <td><small>${isPass ? 'Lengkap' : '-'}</small></td>
+                                <td class="text-center">
+                                    <div class="btn-group">
+                                        ${btnEdit}
+                                        <button class="btn btn-sm btn-outline-dark" onclick="app.printReport('${insp.id}')"><i class="bi bi-printer"></i></button>
+                                        <button class="btn btn-sm btn-outline-danger" onclick="app.deleteInspection('${insp.id}')"><i class="bi bi-trash"></i></button>
+                                    </div>
+                                </td>
+                            </tr>`;
+                    });
+                }
+            } catch (err) { console.error(err); alert("Gagal memuat data."); } finally { this.loading(false); }
+        },
+
+        loadAssetsTable: async function() {
+            this.loading(true);
+            try {
+                const { data, error } = await this.sb.from('assets').select('*').order('created_at', { ascending: false });
+                if(error) throw error;
+                this.cachedAssets = data || [];
+                this.renderAssetTable(this.cachedAssets); 
+            } catch (err) { alert("Error DB: " + err.message); }
+            finally { this.loading(false); }
+        },
+
+        filterAssets: function(keyword) {
+            const term = keyword.toLowerCase();
+            const filtered = this.cachedAssets.filter(ast => 
+                (ast.name && ast.name.toLowerCase().includes(term)) || 
+                (ast.gse_no && ast.gse_no.toLowerCase().includes(term)) ||
+                (ast.plate && ast.plate.toLowerCase().includes(term)) ||
+                (ast.owner && ast.owner.toLowerCase().includes(term))
+            );
+            this.renderAssetTable(filtered);
+        },
+
+        renderAssetTable: function(data) {
+            const tbody = document.getElementById('assetTableBody');
+            if(!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center p-4">Data tidak ditemukan.</td></tr>';
+            } else {
+                tbody.innerHTML = '';
+                data.forEach(ast => {
+                    const photo = ast.photo_url || 'https://via.placeholder.com/60?text=No+Img';
+                    const badge = ast.type === 'Motorized' ? 'bg-danger' : 'bg-success';
+                    tbody.innerHTML += `
+                        <tr>
+                            <td class="ps-4"><img src="${photo}" class="asset-thumb shadow-sm" onclick="window.open('${photo}')"></td>
+                            <td><span class="badge ${badge} mb-1">${ast.type}</span><br><strong>${ast.name}</strong></td>
+                            <td>${ast.plate || '-'}<br>${ast.gse_no}</td>
+                            <td>${ast.owner}<br><small class="text-muted">${ast.fuel}</small></td>
+                            <td class="text-center">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-outline-info" onclick="app.showHistory('${ast.id}')"><i class="bi bi-clock-history"></i></button>
+                                    <button class="btn btn-sm btn-outline-warning" onclick="app.showAssetModal('${ast.id}')"><i class="bi bi-pencil"></i></button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="app.deleteAsset('${ast.id}')"><i class="bi bi-trash"></i></button>
+                                </div>
+                            </td>
+                        </tr>`;
+                });
+            }
+        },
+
+        showHistory: async function(assetId) {
+            let asset = this.cachedAssets.find(a => a.id == assetId);
+            if (!asset) {
+                const { data } = await this.sb.from('assets').select('*').eq('id', assetId).single();
+                asset = data;
+            }
+
+            if(asset) {
+                document.getElementById('hist_name').innerText = asset.name;
+                document.getElementById('hist_gse').innerText = asset.gse_no;
+                document.getElementById('hist_type').innerText = asset.type;
+                document.getElementById('hist_owner').innerText = asset.owner;
+                document.getElementById('hist_fuel').innerText = asset.fuel;
+
+                const qrContainer = document.getElementById("qrcode");
+                qrContainer.innerHTML = ""; 
+                const currentUrl = window.location.href.split('?')[0]; 
+                const qrUrl = `${currentUrl}?history_id=${assetId}`;
+                
+                new QRCode(qrContainer, {
+                    text: qrUrl,
+                    width: 100,
+                    height: 100,
+                    colorDark : "#000000",
+                    colorLight : "#ffffff",
+                    correctLevel : QRCode.CorrectLevel.L
+                });
+            }
+
+            const { data } = await this.sb.from('inspections').select('*').eq('asset_id', assetId).order('date', {ascending: false});
+            const tbody = document.getElementById('historyTableBody');
+            tbody.innerHTML = (!data || !data.length) ? '<tr><td colspan="3" class="text-center">Belum ada riwayat uji.</td></tr>' : '';
+            if(data) data.forEach(insp => {
+                const badge = insp.status === 'Lulus' ? 'bg-success' : 'bg-warning text-dark';
+                tbody.innerHTML += `<tr><td>${insp.date}</td><td><span class="badge ${badge}">${insp.status}</span></td><td class="text-center"><button class="btn btn-sm btn-dark" onclick="app.printReport('${insp.id}')"><i class="bi bi-printer"></i></button></td></tr>`;
+            });
+            
+            new bootstrap.Modal(document.getElementById('historyModal')).show();
+        },
+
+        loadAssetSelect: async function() {
+            try {
+                const { data } = await this.sb.from('assets').select('*');
+                this.cachedAssets = data || [];
+                
+                const sel = document.getElementById('selectAsset');
+                if (this.tomSelect) { this.tomSelect.destroy(); this.tomSelect = null; }
+                sel.innerHTML = '<option value="">-- Cari Kendaraan... --</option>';
+                this.cachedAssets.forEach(a => sel.innerHTML += `<option value="${a.id}">${a.gse_no} - ${a.name}</option>`);
+                
+                this.tomSelect = new TomSelect("#selectAsset", {
+                    create: false, sortField: { field: "text", direction: "asc" }, placeholder: "Ketik untuk mencari...",
+                    plugins: ['dropdown_input'], onChange: () => this.fillAssetDetails()
+                });
+
+                const container = document.getElementById('checklistContainer');
+                container.innerHTML = '';
+                // PERBAIKAN: Menggunakan CHECKLIST_ITEMS Global
+                CHECKLIST_ITEMS.forEach((item, idx) => {
+                    container.innerHTML += `<div class="col-md-6"><div class="d-flex justify-content-between align-items-center border p-2 rounded bg-white shadow-sm h-100"><span class="small fw-bold text-dark me-2">${idx+1}. ${item}</span><div class="d-flex gap-2"><div class="form-check m-0"><input class="form-check-input" type="radio" name="check_${idx}" value="Ada" checked><label class="form-check-label text-success fw-bold small">OK</label></div><div class="form-check m-0"><input class="form-check-input" type="radio" name="check_${idx}" value="Tidak Ada"><label class="form-check-label text-danger fw-bold small">NO</label></div></div></div></div>`;
+                });
+                
+            } catch(e) { console.error(e); }
+        },
+
+        fillAssetDetails: function() {
+            const id = document.getElementById('selectAsset').value;
+            const asset = this.cachedAssets.find(a => a.id == id);
+            if(asset) {
+                document.getElementById('assetDetailInfo').innerHTML = `<span class="text-dark">${asset.name} (${asset.type})</span><br>Owner: ${asset.owner} | No: ${asset.gse_no}`;
+                const url = asset.photo_url;
+                document.getElementById('assetPhotoPreviewForm').innerHTML = url ? `<img src="${url}" style="width:60px;height:60px;object-fit:cover;border-radius:4px">` : `<div class="bg-secondary text-white rounded d-flex align-items-center justify-content-center" style="width:60px; height:60px;"><i class="bi bi-image fs-4"></i></div>`;
+            }
+        },
+
+        submitInspection: async function(e) {
+            e.preventDefault();
+            const assetId = document.getElementById('selectAsset').value;
+            if(!assetId) return alert("Pilih Aset!");
+            this.loading(true);
+            const status = document.querySelector('input[name="finalResult"]:checked').value;
+            let inspNames = { eme: '', arff: '', amc: '' };
+            let sigs = { eme: null, arff: null, amc: null };
+
+            if(status === 'Lulus') {
+                inspNames = { eme: document.getElementById('inspNameEME').value, arff: document.getElementById('inspNameARFF').value, amc: document.getElementById('inspNameAMC').value };
+                if(!inspNames.eme || !inspNames.arff || !inspNames.amc) { this.loading(false); return alert("Isi semua nama inspektor!"); }
+                sigs = { eme: this.canvases['sigEME']?.toDataURL() || null, arff: this.canvases['sigARFF']?.toDataURL() || null, amc: this.canvases['sigAMC']?.toDataURL() || null };
+            }
+
+            const checklist = [];
+            for(let i=0; i<CHECKLIST_ITEMS.length; i++) {
+                const val = document.querySelector(`input[name="check_${i}"]:checked`)?.value || 'Ada';
+                checklist.push({ name: CHECKLIST_ITEMS[i], val: val });
+            }
+            const payload = { date: document.getElementById('testDate').value, asset_id: assetId, checklist: checklist, status: status, inspector_names: inspNames, signatures: sigs };
+            const id = document.getElementById('editInspectionId').value;
+            const { error } = id ? await this.sb.from('inspections').update(payload).eq('id', id) : await this.sb.from('inspections').insert([payload]);
+            this.loading(false);
+            if(error) alert("Error: " + error.message); else { alert("Data Tersimpan!"); this.nav('dashboard'); }
+        },
+
+        editInspection: async function(id) {
+            this.loading(true);
+            const { data } = await this.sb.from('inspections').select('*').eq('id', id).single();
+            this.loading(false);
+            document.getElementById('editInspectionId').value = data.id;
+            this.nav('inspection');
+            await this.loadAssetSelect();
+            if(this.tomSelect) this.tomSelect.setValue(data.asset_id); else document.getElementById('selectAsset').value = data.asset_id;
+            this.fillAssetDetails();
+            document.getElementById('testDate').value = data.date;
+            data.checklist.forEach((c, idx) => { const el = document.querySelector(`input[name="check_${idx}"][value="${c.val}"]`); if(el) el.checked = true; });
+            if(data.status === 'Lulus') { document.getElementById('resPass').checked = true; this.toggleSignatures(); document.getElementById('inspNameEME').value = data.inspector_names.eme; document.getElementById('inspNameARFF').value = data.inspector_names.arff; document.getElementById('inspNameAMC').value = data.inspector_names.amc; } else { document.getElementById('resFail').checked = true; this.toggleSignatures(); }
+        },
+
+        showAssetModal: function(id = null) {
+            document.getElementById('assetForm').reset();
+            document.getElementById('editAssetId').value = "";
+            document.getElementById('existingPhotoUrl').value = "";
+            document.getElementById('imgPreview').src = "https://via.placeholder.com/150?text=No+Image";
+            if(id) {
+                const ast = this.cachedAssets.find(a => a.id == id);
+                if(ast) {
+                    document.getElementById('editAssetId').value = ast.id;
+                    document.getElementById('astOwner').value = ast.owner;
+                    document.getElementById('astType').value = ast.type;
+                    document.getElementById('astName').value = ast.name;
+                    document.getElementById('astFuel').value = ast.fuel;
+                    document.getElementById('astPlate').value = ast.plate;
+                    document.getElementById('astGseNo').value = ast.gse_no;
+                    document.getElementById('astDim').value = ast.dim;
+                    document.getElementById('astUsage').value = ast.usage;
+                    if(ast.photo_url) { document.getElementById('imgPreview').src = ast.photo_url; document.getElementById('existingPhotoUrl').value = ast.photo_url; }
+                }
+            }
+            new bootstrap.Modal(document.getElementById('assetModal')).show();
+        },
+
+        previewFile: function() { const f = document.getElementById('astPhoto').files[0]; if(f){ const r=new FileReader(); r.onload=e=>document.getElementById('imgPreview').src=e.target.result; r.readAsDataURL(f); } },
+
+        submitAsset: async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnSaveAsset'); btn.disabled = true; btn.innerText = "Processing...";
+            const file = document.getElementById('astPhoto').files[0];
+            let photoUrl = document.getElementById('existingPhotoUrl').value;
+            if (file) {
+                const fileName = `${Date.now()}.${file.name.split('.').pop()}`;
+                const { error } = await this.sb.storage.from(BUCKET).upload(fileName, file);
+                if (!error) { const { data } = this.sb.storage.from(BUCKET).getPublicUrl(fileName); photoUrl = data.publicUrl; }
+            }
+            const payload = { owner: document.getElementById('astOwner').value, type: document.getElementById('astType').value, name: document.getElementById('astName').value, fuel: document.getElementById('astFuel').value, plate: document.getElementById('astPlate').value, gse_no: document.getElementById('astGseNo').value, dim: document.getElementById('astDim').value, usage: document.getElementById('astUsage').value, photo_url: photoUrl };
+            const id = document.getElementById('editAssetId').value;
+            const { error } = id ? await this.sb.from('assets').update(payload).eq('id', id) : await this.sb.from('assets').insert([payload]);
+            btn.disabled = false; btn.innerText = "Simpan Aset";
+            if(error) alert(error.message); else { bootstrap.Modal.getInstance(document.getElementById('assetModal')).hide(); this.loadAssetsTable(); }
+        },
+
+        deleteAsset: async function(id) { if(confirm("Hapus aset?")) { await this.sb.from('assets').delete().eq('id', id); this.loadAssetsTable(); } },
+        deleteInspection: async function(id) { if(confirm("Hapus laporan?")) { await this.sb.from('inspections').delete().eq('id', id); this.loadDashboard(); } },
+        loading: function(s) { document.getElementById('loadingOverlay').classList.toggle('d-none', !s); },
+        
+        // PERBAIKAN: Menambahkan logic resize canvas saat bagian tanda tangan muncul
+        toggleSignatures: function() { 
+            const isPass = document.getElementById('resPass').checked; 
+            const sigSec = document.getElementById('signatureSection');
+            sigSec.classList.toggle('d-none', !isPass); 
+            
+            if(isPass) {
+                // Beri sedikit delay agar DOM render, lalu init canvas
+                setTimeout(() => {
+                    this.initCanvas('sigEME');
+                    this.initCanvas('sigARFF');
+                    this.initCanvas('sigAMC');
+                }, 100);
+            }
+        },
+
+        initCanvas: function(id) {
+            const c = document.getElementById(id); if (!c) return;
+            // PERBAIKAN: Pastikan parent punya lebar, jika 0 (hidden), jangan set dulu
+            if(c.parentElement.offsetWidth > 0) {
+                 c.width = c.parentElement.offsetWidth; 
+                 c.height = 150;
+            }
+            const ctx = c.getContext('2d'); ctx.lineWidth = 2; ctx.lineCap = "round"; ctx.strokeStyle = "#000";
+            let d = false;
+            const getPos = (e) => { const rect = c.getBoundingClientRect(); return {x: (e.touches?e.touches[0].clientX:e.clientX)-rect.left, y: (e.touches?e.touches[0].clientY:e.clientY)-rect.top}; }
+            const start = (e) => { if(e.target == c) e.preventDefault(); d = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); };
+            const move = (e) => { if(e.target == c) e.preventDefault(); if(d) { const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); } };
+            const end = (e) => { if(e.target == c) e.preventDefault(); d = false; };
+            
+            // Re-bind events (untuk memastikan tidak double bind, bisa pakai removeEventListener dulu idealnya, tapi ini ok untuk simple use)
+            c.onmousedown = start; c.onmousemove = move; c.onmouseup = end; 
+            c.ontouchstart = start; c.ontouchmove = move; c.ontouchend = end;
+            this.canvases[id] = c;
+        },
+        
+        clearSig: function(id) { const c = this.canvases[id]; if(c) c.getContext('2d').clearRect(0,0,c.width,c.height); },
+        resetForm: function() { document.getElementById('inspectionForm').reset(); document.getElementById('editInspectionId').value = ''; document.getElementById('resFail').checked = true; this.toggleSignatures(); ['sigEME', 'sigARFF', 'sigAMC'].forEach(id => this.clearSig(id)); },
+        
+        printReport: async function(id) {
+            this.loading(true);
+            const { data: insp } = await this.sb.from('inspections').select('*, assets(*)').eq('id', id).single();
+            this.loading(false);
+            if(!insp) return;
+            const asset = insp.assets || {};
+            const esc = (s) => (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;');
+            // Data sudah diperbaiki di submitInspection, jadi c.name sekarang akan benar
+            const rows = insp.checklist.map((c,i)=>`<tr><td style="border:1px solid #000;padding:4px;">${esc(c.name)}</td><td style="border:1px solid #000;text-align:center;">${esc(c.val)}</td></tr>`).join('');
+            const img = (s) => s ? `<img src="${s}" height="50" style="display:block;margin:0 auto">` : '<div style="height:50px"></div>';
+            const photo = asset.photo_url ? `<img src="${asset.photo_url}" style="width:120px;height:120px;object-fit:cover;border:1px solid #000">` : '';
+            const names = insp.inspector_names || {};
+            const sigs = insp.signatures || {};
+            const html = `<div style="font-family:Arial;padding:20px;color:black"><h3 style="text-align:center;text-decoration:underline">LAPORAN UJI LAIK KENDARAAN & GSE</h3><p style="text-align:center;margin:0">Tanggal Uji: ${esc(insp.date)}</p><div style="border:2px solid black;padding:10px;margin:20px 0;display:flex"><div style="flex:1"><table style="width:100%;line-height:1.6"><tr><td width="180"><strong>Pemilik</strong></td><td>: ${esc(asset.owner)}</td></tr><tr><td><strong>Jenis</strong></td><td>: ${esc(asset.type)}</td></tr><tr><td><strong>Nama GSE</strong></td><td>: ${esc(asset.name)}</td></tr><tr><td><strong>BBM</strong></td><td>: ${esc(asset.fuel)}</td></tr><tr><td><strong>Plat</strong></td><td>: ${esc(asset.plate)}</td></tr><tr><td><strong>No GSE</strong></td><td>: ${esc(asset.gse_no)}</td></tr><tr><td><strong>Status</strong></td><td>: <strong>${esc(insp.status.toUpperCase())}</strong></td></tr></table></div><div style="width:140px;text-align:right">${photo}</div></div><table style="width:100%;border-collapse:collapse;margin-bottom:20px"><thead style="background:#ddd"><tr><th style="border:1px solid black;padding:5px">Item</th><th style="border:1px solid black;width:100px;text-align:center">Kondisi</th></tr></thead><tbody>${rows}</tbody></table>${insp.status === 'Lulus' ? `<table style="width:100%;text-align:center;border:1px solid black;border-collapse:collapse"><tr><td width="33%" style="border-right:1px solid black;padding:10px;vertical-align:bottom"><strong>AE</strong><br>${img(sigs.eme)}<br><u>${esc(names.eme)}</u></td><td width="33%" style="border-right:1px solid black;padding:10px;vertical-align:bottom"><strong>ARFF</strong><br>${img(sigs.arff)}<br><u>${esc(names.arff)}</u></td><td width="33%" style="padding:10px;vertical-align:bottom"><strong>AMC</strong><br>${img(sigs.amc)}<br><u>${esc(names.amc)}</u></td></tr></table>` : '<h2 style="color:red;text-align:center;border:2px solid red;padding:10px">TIDAK MEMENUHI</h2>'}<div style="margin-top:20px;text-align:right;font-size:10px">Dicetak: ${new Date().toLocaleString()}</div></div>`;
+            const printArea = document.getElementById('printArea'); printArea.innerHTML = html; printArea.classList.remove('d-none');
+            setTimeout(() => { window.print(); setTimeout(() => { printArea.classList.add('d-none'); printArea.innerHTML = ''; }, 100); }, 800);
+        }
+    };
+
+    window.onload = function() { app.init(); };
+</script>
+</body>
+</html>

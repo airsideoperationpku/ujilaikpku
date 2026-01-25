@@ -2,19 +2,23 @@
   "name": "SIUL PKU - Uji Laik",
   "short_name": "SIUL PKU",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#ffffff",
+  "background_color": "#f4f6f9",
   "theme_color": "#0d6efd",
+  "orientation": "portrait",
   "icons": [
     {
-      "src": "https://ready-white-ixqloa1mpz.edgeone.app/LOGO_AIRSIDE_OPERATION_MASTER_2025-removebg-preview.png",
+      "src": "https://cdn-icons-png.flaticon.com/512/2942/2942813.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "https://ready-white-ixqloa1mpz.edgeone.app/LOGO_AIRSIDE_OPERATION_MASTER_2025-removebg-preview.png",
+      "src": "https://cdn-icons-png.flaticon.com/512/2942/2942813.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }

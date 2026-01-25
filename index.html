@@ -4,18 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AMC UJI LAIK</title>
+    
+    <link rel="manifest" href="manifest.json">
+    
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2942/2942813.png">
+    <meta name="apple-mobile-web-app-status-bar" content="#0d6efd">
+    <meta name="theme-color" content="#0d6efd">
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { 
-            /* Fallback color jika gambar gagal dimuat */
             background-color: #f8f9fa;
-            
-            /* Background Image (Bandara) dengan Overlay Gelap Transparan */
-            background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('https://images.unsplash.com/photo-1769329884496-fac0252fe1d5?q=80&w=1932&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
-            
-            /* Agar gambar memenuhi layar */
+            background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('https://images.unsplash.com/photo-1769329884496-fac0252fe1d5?q=80&w=1932&auto=format&fit=crop');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -32,12 +34,9 @@
         .card-signin { 
             border: none; 
             border-radius: 1rem; 
-            /* Memberikan shadow lebih tebal agar kontras dengan background */
             box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.5); 
             width: 100%; 
             max-width: 400px; 
-            
-            /* Efek kaca (Glassmorphism) opsional - Hapus backdrop-filter & background jika ingin putih solid biasa */
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(5px);
         }
@@ -89,12 +88,10 @@
 </div>
 
 <script>
-    // --- KONFIGURASI SUPABASE ---
     const supabaseUrl = 'https://fusjhnckcwmaybrzczcq.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1c2pobmNrY3dtYXlicnpjemNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYxNDUwOTYsImV4cCI6MjA4MTcyMTA5Nn0.YUxghOhHimUJe92Cf4gyeKGlaZ4qyCkHWuISSlrSHrE';
     const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-    // --- LOGIC LOGIN ---
     const loginForm = document.getElementById('loginForm');
     const btnLogin = document.getElementById('btnLogin');
     const btnText = document.getElementById('btnText');
@@ -103,8 +100,6 @@
 
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
-        // Reset UI
         alertMessage.innerHTML = '';
         btnLogin.disabled = true;
         btnText.classList.add('d-none');
@@ -118,12 +113,8 @@
                 email: email,
                 password: password,
             });
-
             if (error) throw error;
-
-            // Jika sukses, redirect ke home
             window.location.href = 'home.html';
-
         } catch (error) {
             alertMessage.innerHTML = `
                 <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
@@ -137,7 +128,6 @@
         }
     });
 
-    // Cek jika user sudah login, langsung lempar ke home
     async function checkSession() {
         const { data: { session } } = await supabaseClient.auth.getSession();
         if (session) {
@@ -145,6 +135,19 @@
         }
     }
     checkSession();
+</script>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(registration => {
+          console.log('ServiceWorker registration successful with scope: ', registration.scope);
+        }, err => {
+          console.log('ServiceWorker registration failed: ', err);
+        });
+    });
+  }
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

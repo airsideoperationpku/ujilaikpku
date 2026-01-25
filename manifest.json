@@ -9,19 +9,20 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "https://ready-white-ixqloa1mpz.edgeone.app/LOGO_AIRSIDE_OPERATION_MASTER_2025-removebg-preview.png",
+      "src": "https://i.imgur.com/CcJRq0H.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "https://ready-white-ixqloa1mpz.edgeone.app/LOGO_AIRSIDE_OPERATION_MASTER_2025-removebg-preview.png",
+      "src": "https://i.imgur.com/CcJRq0H.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     }
   ]
 }
+
 
 
 

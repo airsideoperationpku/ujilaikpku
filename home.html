@@ -168,6 +168,11 @@
 
                             <h6 class="fw-bold border-bottom pb-2 mb-3 text-primary">Item Pemeriksaan (Checklist)</h6>
                             <div class="row g-2" id="checklistContainer"></div>
+
+                            <div class="mb-4 mt-4">
+                                <label for="inspectionNotes" class="form-label fw-bold h6">Notes / Catatan:</label>
+                                <textarea id="inspectionNotes" class="form-control" rows="3" placeholder="Masukkan catatan pengujian..."></textarea>
+                            </div>
                             <hr class="my-4">
 
                             <div class="mb-4">
@@ -334,14 +339,52 @@
     const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1c2pobmNrY3dtYXlicnpjemNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYxNDUwOTYsImV4cCI6MjA4MTcyMTA5Nn0.YUxghOhHimUJe92Cf4gyeKGlaZ4qyCkHWuISSlrSHrE';
     const BUCKET = 'assets-photos';
     
-    const CHECKLIST_ITEMS = [ 
-        "Kondisi Kabel/Pengapian", "Kondisi Lampu/Rotary", "Kondisi Rem/ Rem Tangan", 
-        "Kondisi Ban / Roda", "Tameng Manifold", "Saringan Karburator", 
-        "Battrey / Accu", "Busi atau injector", "Dinamo Starter", 
-        "Tombol Listrik", "Pemadam Api Portable", "Tidak ada kobocoran BBM/Oli", 
-        "Cat Kendaraan/GSE", "Kondisi GSE", "Pengamanan GSE", 
-        "Pipa/Saluran/Selang", "Saringan Knalpot (Flame Trap)", 
-        "Tanda Dilarang Merokok", "Logo Perusahaan" 
+    const CHECKLIST_ITEMS = [
+        "Logo Operator",
+        "Tanda Dilarang Merokok",
+        "Flame Trap",
+        "Safety Belt",
+        "Tempat Sampah",
+        "Name Plate",
+        "Ban Roda Depan Dan Belakang",
+        "Kaca Spion (Kiri dan Kanan)",
+        "Pemadam Api (Fire Extinguisher)",
+        "Kondisi Bodi",
+        "Kondisi Mesin",
+        "Pintu",
+        "Motor Starter",
+        "Charging System (Ampere/Volt Meter)",
+        "Pengukur Tekanan Oli Mesin (Oil Pressure Gauge)",
+        "Pengukur Tekanan Oli Hidrolik (Hydraulic Pressure Gauge)",
+        "Pengukur Temperatur Mesin (Engine Temperature Gauge)",
+        "Pengukur Kecepatan (Speedometer)",
+        "Petunjuk RPM Mesin (Tachometer)",
+        "Hour Meter",
+        "Fuel Meter",
+        "Panel Indikator",
+        "Lampu Depan (headlight)",
+        "Lampu Belakang (Tail Light)",
+        "Lampu Peringatan (Warning Light)",
+        "Lampu Sign (Kiri dan Kanan)",
+        "Lampu Rem",
+        "Lampu Mundur",
+        "Lampu Kerja (work light/Hazard)",
+        "Lampu Rotary / Flash Yellow",
+        "Lampu Cabin",
+        "Pembersih Kaca (Wiper)",
+        "Listrik dan Pengampan (Fuses & Circuit Breaker)",
+        "Service brake & Parking Brake",
+        "Sistem Kemudi (Power Steering)",
+        "Sistem Transmisi",
+        "Pedal Gas",
+        "Pedal Kopling",
+        "Emergency stop",
+        "Tow Hitch & Tali Penarik",
+        "Bel (horn)",
+        "Pelindung Battery",
+        "Kabel Pengapian/busi",
+        "Sertifikat Laik Operasi yang masih berlaku",
+        "Surat Tanda Nomor Kendaraan (STNK) yang masih berlaku"
     ];
 
     const app = {
@@ -581,7 +624,29 @@
                 container.innerHTML = '';
                 // PERBAIKAN: Menggunakan CHECKLIST_ITEMS Global
                 CHECKLIST_ITEMS.forEach((item, idx) => {
-                    container.innerHTML += `<div class="col-md-6"><div class="d-flex justify-content-between align-items-center border p-2 rounded bg-white shadow-sm h-100"><span class="small fw-bold text-dark me-2">${idx+1}. ${item}</span><div class="d-flex gap-2"><div class="form-check m-0"><input class="form-check-input" type="radio" name="check_${idx}" value="Ada" checked><label class="form-check-label text-success fw-bold small">OK</label></div><div class="form-check m-0"><input class="form-check-input" type="radio" name="check_${idx}" value="Tidak Ada"><label class="form-check-label text-danger fw-bold small">NO</label></div></div></div></div>`;
+                    container.innerHTML += `
+                        <div class="col-md-6">
+                            <div class="border p-2 rounded bg-white shadow-sm h-100">
+                                <span class="small fw-bold text-dark d-block mb-2">${idx + 1}. ${item}</span>
+                                <div class="d-flex gap-3 flex-wrap">
+                                    <div class="form-check m-0">
+                                        <input class="form-check-input" type="radio" name="check_${idx}" value="OK" checked>
+                                        <label class="form-check-label text-success fw-bold small">OK</label>
+                                    </div>
+                                    <div class="form-check m-0">
+                                        <input class="form-check-input" type="radio" name="check_${idx}" value="Tidak Lengkap">
+                                        <label class="form-check-label text-warning fw-bold small">Tidak Lengkap</label>
+                                    </div>
+                                    <div class="form-check m-0">
+                                        <input class="form-check-input" type="radio" name="check_${idx}" value="Tidak Perlu">
+                                        <label class="form-check-label text-secondary fw-bold small">Tidak Perlu</label>
+                                    </div>
+                                </div>
+                                <div class="mt-2">
+                                    <input type="text" class="form-control form-control-sm" name="note_${idx}" placeholder="Catatan item (opsional)">
+                                </div>
+                            </div>
+                        </div>`;
                 });
                 
             } catch(e) { console.error(e); }
@@ -614,10 +679,11 @@
 
             const checklist = [];
             for(let i=0; i<CHECKLIST_ITEMS.length; i++) {
-                const val = document.querySelector(`input[name="check_${i}"]:checked`)?.value || 'Ada';
-                checklist.push({ name: CHECKLIST_ITEMS[i], val: val });
+                const val = document.querySelector(`input[name="check_${i}"]:checked`)?.value || 'OK';
+                const note = document.querySelector(`input[name="note_${i}"]`)?.value || '';
+                checklist.push({ name: CHECKLIST_ITEMS[i], val: val, note: note });
             }
-            const payload = { date: document.getElementById('testDate').value, asset_id: assetId, checklist: checklist, status: status, inspector_names: inspNames, signatures: sigs };
+            const payload = { date: document.getElementById('testDate').value, asset_id: assetId, checklist: checklist, status: status, notes: document.getElementById('inspectionNotes').value || '', inspector_names: inspNames, signatures: sigs };
             const id = document.getElementById('editInspectionId').value;
             const { error } = id ? await this.sb.from('inspections').update(payload).eq('id', id) : await this.sb.from('inspections').insert([payload]);
             this.loading(false);
@@ -634,7 +700,13 @@
             if(this.tomSelect) this.tomSelect.setValue(data.asset_id); else document.getElementById('selectAsset').value = data.asset_id;
             this.fillAssetDetails();
             document.getElementById('testDate').value = data.date;
-            data.checklist.forEach((c, idx) => { const el = document.querySelector(`input[name="check_${idx}"][value="${c.val}"]`); if(el) el.checked = true; });
+            data.checklist.forEach((c, idx) => {
+                const el = document.querySelector(`input[name="check_${idx}"][value="${c.val}"]`);
+                if(el) el.checked = true;
+                const noteEl = document.querySelector(`input[name="note_${idx}"]`);
+                if(noteEl) noteEl.value = c.note || '';
+            });
+            document.getElementById('inspectionNotes').value = data.notes || '';
             if(data.status === 'Lulus') { document.getElementById('resPass').checked = true; this.toggleSignatures(); document.getElementById('inspNameEME').value = data.inspector_names.eme; document.getElementById('inspNameARFF').value = data.inspector_names.arff; document.getElementById('inspNameAMC').value = data.inspector_names.amc; } else { document.getElementById('resFail').checked = true; this.toggleSignatures(); }
         },
 
@@ -731,12 +803,12 @@
             const asset = insp.assets || {};
             const esc = (s) => (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;');
             // Data sudah diperbaiki di submitInspection, jadi c.name sekarang akan benar
-            const rows = insp.checklist.map((c,i)=>`<tr><td style="border:1px solid #000;padding:4px;">${esc(c.name)}</td><td style="border:1px solid #000;text-align:center;">${esc(c.val)}</td></tr>`).join('');
+            const rows = insp.checklist.map((c,i)=>`<tr><td style="border:1px solid #000;padding:4px;">${esc(c.name)}</td><td style="border:1px solid #000;padding:4px;">${esc(c.note || '-')}</td><td style="border:1px solid #000;text-align:center;">${esc(c.val)}</td></tr>`).join('');
             const img = (s) => s ? `<img src="${s}" height="50" style="display:block;margin:0 auto">` : '<div style="height:50px"></div>';
             const photo = asset.photo_url ? `<img src="${asset.photo_url}" style="width:120px;height:120px;object-fit:cover;border:1px solid #000">` : '';
             const names = insp.inspector_names || {};
             const sigs = insp.signatures || {};
-            const html = `<div style="font-family:Arial;padding:20px;color:black"><h3 style="text-align:center;text-decoration:underline">LAPORAN UJI LAIK KENDARAAN & GSE</h3><p style="text-align:center;margin:0">Tanggal Uji: ${esc(insp.date)}</p><div style="border:2px solid black;padding:10px;margin:20px 0;display:flex"><div style="flex:1"><table style="width:100%;line-height:1.6"><tr><td width="180"><strong>Pemilik</strong></td><td>: ${esc(asset.owner)}</td></tr><tr><td><strong>Jenis</strong></td><td>: ${esc(asset.type)}</td></tr><tr><td><strong>Nama GSE</strong></td><td>: ${esc(asset.name)}</td></tr><tr><td><strong>BBM</strong></td><td>: ${esc(asset.fuel)}</td></tr><tr><td><strong>Plat</strong></td><td>: ${esc(asset.plate)}</td></tr><tr><td><strong>No GSE</strong></td><td>: ${esc(asset.gse_no)}</td></tr><tr><td><strong>Status</strong></td><td>: <strong>${esc(insp.status.toUpperCase())}</strong></td></tr></table></div><div style="width:140px;text-align:right">${photo}</div></div><table style="width:100%;border-collapse:collapse;margin-bottom:20px"><thead style="background:#ddd"><tr><th style="border:1px solid black;padding:5px">Item</th><th style="border:1px solid black;width:100px;text-align:center">Kondisi</th></tr></thead><tbody>${rows}</tbody></table>${insp.status === 'Lulus' ? `<table style="width:100%;text-align:center;border:1px solid black;border-collapse:collapse"><tr><td width="33%" style="border-right:1px solid black;padding:10px;vertical-align:bottom"><strong>AE</strong><br>${img(sigs.eme)}<br><u>${esc(names.eme)}</u></td><td width="33%" style="border-right:1px solid black;padding:10px;vertical-align:bottom"><strong>ARFF</strong><br>${img(sigs.arff)}<br><u>${esc(names.arff)}</u></td><td width="33%" style="padding:10px;vertical-align:bottom"><strong>AMC</strong><br>${img(sigs.amc)}<br><u>${esc(names.amc)}</u></td></tr></table>` : '<h2 style="color:red;text-align:center;border:2px solid red;padding:10px">TIDAK MEMENUHI</h2>'}<div style="margin-top:20px;text-align:right;font-size:10px">Dicetak: ${new Date().toLocaleString()}</div></div>`;
+            const html = `<div style="font-family:Arial;padding:20px;color:black"><h3 style="text-align:center;text-decoration:underline">LAPORAN UJI LAIK KENDARAAN & GSE</h3><p style="text-align:center;margin:0">Tanggal Uji: ${esc(insp.date)}</p><div style="border:2px solid black;padding:10px;margin:20px 0;display:flex"><div style="flex:1"><table style="width:100%;line-height:1.6"><tr><td width="180"><strong>Pemilik</strong></td><td>: ${esc(asset.owner)}</td></tr><tr><td><strong>Jenis</strong></td><td>: ${esc(asset.type)}</td></tr><tr><td><strong>Nama GSE</strong></td><td>: ${esc(asset.name)}</td></tr><tr><td><strong>BBM</strong></td><td>: ${esc(asset.fuel)}</td></tr><tr><td><strong>Plat</strong></td><td>: ${esc(asset.plate)}</td></tr><tr><td><strong>No GSE</strong></td><td>: ${esc(asset.gse_no)}</td></tr><tr><td><strong>Status</strong></td><td>: <strong>${esc(insp.status.toUpperCase())}</strong></td></tr><tr><td><strong>Notes / Catatan</strong></td><td>: ${esc(insp.notes || '-')}</td></tr></table></div><div style="width:140px;text-align:right">${photo}</div></div><table style="width:100%;border-collapse:collapse;margin-bottom:20px"><thead style="background:#ddd"><tr><th style="border:1px solid black;padding:5px">Item Pemeriksaan (Checklist)</th><th style="border:1px solid black;padding:5px;text-align:center">Catatan</th><th style="border:1px solid black;width:140px;text-align:center">Hasil Akhir Pengujian</th></tr></thead><tbody>${rows}</tbody></table>${insp.status === 'Lulus' ? `<table style="width:100%;text-align:center;border:1px solid black;border-collapse:collapse"><tr><td width="33%" style="border-right:1px solid black;padding:10px;vertical-align:bottom"><strong>AE</strong><br>${img(sigs.eme)}<br><u>${esc(names.eme)}</u></td><td width="33%" style="border-right:1px solid black;padding:10px;vertical-align:bottom"><strong>ARFF</strong><br>${img(sigs.arff)}<br><u>${esc(names.arff)}</u></td><td width="33%" style="padding:10px;vertical-align:bottom"><strong>AMC</strong><br>${img(sigs.amc)}<br><u>${esc(names.amc)}</u></td></tr></table><table style="width:100%;text-align:center;border:1px solid black;border-collapse:collapse;margin-top:10px"><tr><td style="padding:10px;vertical-align:bottom"><strong>Airport Operation Airside Dept. Hide</strong><div style="height:50px"></div><u>M. Arafat A. Manurung</u></td></tr></table>` : '<h2 style="color:red;text-align:center;border:2px solid red;padding:10px">TIDAK MEMENUHI</h2>'}<div style="margin-top:20px;text-align:right;font-size:10px">Dicetak: ${new Date().toLocaleString()}</div></div>`;
             const printArea = document.getElementById('printArea'); printArea.innerHTML = html; printArea.classList.remove('d-none');
             setTimeout(() => { window.print(); setTimeout(() => { printArea.classList.add('d-none'); printArea.innerHTML = ''; }, 100); }, 800);
         }
@@ -760,6 +832,5 @@
 
 </body>
 </html>
-
 
 

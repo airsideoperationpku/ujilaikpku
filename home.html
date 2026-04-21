@@ -500,14 +500,24 @@
                         const asset = insp.assets || { name: 'Unit Terhapus', gse_no: '-' };
                         const isPass = insp.status === 'Lulus';
                         const badge = isPass ? 'bg-success' : 'bg-warning text-dark';
-                        const btnEdit = !isPass ? `<button class="btn btn-sm btn-outline-warning" onclick="app.editInspection('${insp.id}')"><i class="bi bi-pencil"></i></button>` : '';
+
+                        const names = insp.inspector_names || {};
+                        const hasAllInspectorNames = Boolean(
+                            (names.eme || '').trim() &&
+                            (names.arff || '').trim() &&
+                            (names.amc || '').trim()
+                        );
+                        const inspectorStatus = hasAllInspectorNames ? 'Lengkap' : 'Tidak Lengkap';
+                        const btnEdit = (insp.status === 'Lulus' && inspectorStatus === 'Lengkap')
+                            ? ''
+                            : `<button class="btn btn-sm btn-outline-warning" onclick="app.editInspection('${insp.id}')"><i class="bi bi-pencil"></i></button>`;
                         
                         tbody.innerHTML += `
                             <tr>
                                 <td class="ps-4 fw-bold">${insp.date}</td>
                                 <td>${asset.name}<br><small class="text-muted">${asset.gse_no}</small></td>
                                 <td><span class="badge ${badge}">${insp.status}</span></td>
-                                <td><small>${isPass ? 'Lengkap' : '-'}</small></td>
+                                <td><small>${inspectorStatus}</small></td>
                                 <td class="text-center">
                                     <div class="btn-group">
                                         ${btnEdit}
@@ -618,7 +628,7 @@
                 const sel = document.getElementById('selectAsset');
                 if (this.tomSelect) { this.tomSelect.destroy(); this.tomSelect = null; }
                 sel.innerHTML = '<option value="">-- Cari Kendaraan... --</option>';
-                this.cachedAssets.forEach(a => sel.innerHTML += `<option value="${a.id}">${a.gse_no} - ${a.name}</option>`);
+                this.cachedAssets.forEach(a => sel.innerHTML += `<option value="${a.id}">${a.gse_no} - ${a.name} - ${a.owner} - ${a.plate}</option>`);
                 
                 this.tomSelect = new TomSelect("#selectAsset", {
                     create: false, sortField: { field: "text", direction: "asc" }, placeholder: "Ketik untuk mencari...",
@@ -678,7 +688,6 @@
 
             if(status === 'Lulus') {
                 inspNames = { eme: document.getElementById('inspNameEME').value, arff: document.getElementById('inspNameARFF').value, amc: document.getElementById('inspNameAMC').value };
-                if(!inspNames.eme || !inspNames.arff || !inspNames.amc) { this.loading(false); return alert("Isi semua nama inspektor!"); }
                 sigs = { eme: this.canvases['sigEME']?.toDataURL() || null, arff: this.canvases['sigARFF']?.toDataURL() || null, amc: this.canvases['sigAMC']?.toDataURL() || null };
             }
 
@@ -837,5 +846,4 @@
 
 </body>
 </html>
-
 

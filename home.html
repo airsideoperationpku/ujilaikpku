@@ -57,20 +57,13 @@
                 padding-top: 0 !important;
             }
 
-            nav,
-            .container,
-            .modal,
-            #loadingOverlay {
+            body > *:not(#printArea) {
                 display: none !important;
-            }
-
-            #printArea, #printArea * {
-                visibility: visible !important;
             }
 
             #printArea {
                 display: block !important;
-                position: fixed !important;
+                position: relative !important;
                 left: 0 !important;
                 top: 0 !important;
                 width: 100% !important;
@@ -79,7 +72,12 @@
                 padding: 0 !important;
                 background: #fff !important;
                 overflow: visible !important;
-                z-index: 2147483647 !important;
+                visibility: visible !important;
+                z-index: auto !important;
+            }
+
+            #printArea * {
+                visibility: visible !important;
             }
 
             .print-sheet {
@@ -911,7 +909,10 @@
             printArea.innerHTML = html;
             printArea.classList.remove('d-none');
 
+            let cleaned = false;
             const cleanupPrintArea = () => {
+                if (cleaned) return;
+                cleaned = true;
                 printArea.classList.add('d-none');
                 printArea.innerHTML = '';
                 window.removeEventListener('afterprint', cleanupPrintArea);
@@ -919,11 +920,15 @@
 
             window.addEventListener('afterprint', cleanupPrintArea);
 
-            setTimeout(() => {
-                window.print();
-                // Fallback lebih aman untuk browser mobile yang lambat membuka dialog print
-                setTimeout(cleanupPrintArea, 10000);
-            }, 300);
+            // Tunggu 2 frame agar layout benar-benar commit sebelum print (lebih stabil di mobile)
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    window.print();
+                });
+            });
+
+            // Fallback panjang khusus mobile: jangan cleanup terlalu cepat
+            setTimeout(cleanupPrintArea, 30000);
         }
     };
 

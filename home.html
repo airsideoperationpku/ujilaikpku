@@ -8,34 +8,235 @@
     <link rel="manifest" href="manifest.json">
 
     <link rel="apple-touch-icon" href="https://i.imgur.com/ghmC9XV.png">
-    <meta name="apple-mobile-web-app-status-bar" content="#0d6efd">
-    <meta name="theme-color" content="#0d6efd">
+    <meta name="apple-mobile-web-app-status-bar" content="#0f3c81">
+    <meta name="theme-color" content="#0f3c81">
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tom-select/2.2.2/css/tom-select.bootstrap5.min.css" rel="stylesheet">
     
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+        :root {
+            --primary-bg: #f8fafc;
+            --card-bg: #ffffff;
+            --brand-blue: #0f3c81;     /* Aviation Blue Primary */
+            --brand-light: #1d5ec2;    /* Aviation Blue Accent */
+            --text-dark: #0f172a;      /* Deep Slate Dark */
+            --text-muted: #64748b;    /* Muted Slate */
+            --border-color: #e2e8f0;   /* Light Border */
+            --radius-lg: 16px;
+            --radius-md: 10px;
+        }
+
         body { 
-            background-color: #f4f6f9; 
-            font-family: 'Segoe UI', sans-serif; 
-            padding-top: 80px; 
+            background-color: var(--primary-bg); 
+            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; 
+            padding-top: 95px; 
+            color: var(--text-dark);
+            -webkit-font-smoothing: antialiased;
         }
         
-        .navbar-brand { font-weight: bold; letter-spacing: 1px; }
-        .nav-link { font-weight: 500; transition: all 0.2s; cursor: pointer; }
-        .nav-link.active { font-weight: 700; color: #fff !important; text-decoration: underline; text-underline-offset: 5px;}
-
-        #loadingOverlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255,255,255,0.95); z-index: 99999;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        /* Modernized Top Navbar */
+        .navbar {
+            background-color: var(--brand-blue) !important;
+            box-shadow: 0 4px 20px rgba(15, 60, 129, 0.12);
+            padding: 16px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .navbar-brand { 
+            font-weight: 800; 
+            letter-spacing: 0.5px; 
+            font-size: 1.35rem;
+            color: #ffffff !important;
+        }
+        .nav-link { 
+            font-weight: 500; 
+            color: rgba(255, 255, 255, 0.75) !important;
+            padding: 8px 16px !important;
+            border-radius: var(--radius-md);
+            transition: all 0.25s ease; 
+            cursor: pointer; 
+        }
+        .nav-link:hover {
+            color: #ffffff !important;
+            background-color: rgba(255, 255, 255, 0.08);
+        }
+        .nav-link.active { 
+            font-weight: 700; 
+            color: #ffffff !important; 
+            background-color: rgba(255, 255, 255, 0.15);
+            text-decoration: none !important;
         }
 
-        .signature-pad { border: 2px dashed #ced4da; background: #fff; cursor: crosshair; width: 100%; border-radius: 6px; display: block; touch-action: none; }
-        .asset-thumb { width: 50px; height: 50px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 1px solid #dee2e6; }
+        /* Loading Overlay Overlay UI */
+        #loadingOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(8px); z-index: 99999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        #loadingOverlay .spinner-border {
+            color: var(--brand-light) !important;
+        }
+
+        /* Cards & Containers Redesign */
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
+        }
+        .card-header {
+            background-color: transparent;
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.25rem 1.5rem;
+        }
+        
+        /* Interactive Elements & Dynamic Inputs */
+        .form-control, .form-select, .ts-control {
+            border-radius: var(--radius-md) !important;
+            border: 1px solid #cbd5e1 !important;
+            padding: 0.65rem 1rem;
+            font-size: 0.95rem;
+            font-weight: 500;
+            background-color: #f8fafc;
+            color: var(--text-dark);
+            transition: all 0.2s ease;
+        }
+        .form-control:focus, .form-select:focus, .ts-control.focus {
+            border-color: var(--brand-light) !important;
+            box-shadow: 0 0 0 4px rgba(29, 94, 194, 0.12) !important;
+            background-color: #ffffff;
+        }
+        .form-label {
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        /* Buttons Enhancement */
+        .btn {
+            border-radius: var(--radius-md);
+            padding: 0.6rem 1.25rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .btn-primary {
+            background-color: var(--brand-light);
+            border: none;
+        }
+        .btn-primary:hover, .btn-primary:active, .btn-primary:focus {
+            background-color: var(--brand-blue) !important;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(29, 94, 194, 0.25);
+        }
+        .btn-outline-primary {
+            border-color: var(--brand-light);
+            color: var(--brand-light);
+        }
+        .btn-outline-primary:hover {
+            background-color: var(--brand-light);
+            border-color: var(--brand-light);
+            transform: translateY(-1px);
+        }
+
+        /* Metrics Display in Dashboard */
+        .metric-title {
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 700;
+            color: var(--text-muted);
+        }
+        .metric-value {
+            font-size: 2.25rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            color: var(--text-dark);
+        }
+
+        /* Tables Minimalistic Concept */
+        .table {
+            color: var(--text-dark);
+        }
+        .table-light {
+            background-color: #f1f5f9;
+            color: var(--text-muted);
+        }
+        .table-light th {
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+            border: none;
+            padding: 14px 16px;
+        }
+        .table tbody tr {
+            border-bottom: 1px solid var(--border-color);
+            transition: background-color 0.2s ease;
+        }
+        .table tbody tr:hover {
+            background-color: #f8fafc !important;
+        }
+        .table td {
+            padding: 16px;
+        }
+
+        /* Signature Canvas Layout */
+        .signature-pad { 
+            border: 2px dashed #cbd5e1; 
+            background: #ffffff; 
+            cursor: crosshair; 
+            width: 100%; 
+            border-radius: var(--radius-md); 
+            display: block; 
+            touch-action: none; 
+            transition: border-color 0.2s ease;
+        }
+        .signature-pad:hover {
+            border-color: var(--brand-light);
+        }
+        .asset-thumb { 
+            width: 52px; 
+            height: 52px; 
+            object-fit: cover; 
+            border-radius: var(--radius-md); 
+            cursor: pointer; 
+            border: 1px solid var(--border-color);
+            transition: transform 0.2s ease;
+        }
+        .asset-thumb:hover {
+            transform: scale(1.08);
+        }
         .cursor-pointer { cursor: pointer; }
-        .hover-shadow:hover { box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important; transition: 0.3s; }
+        .hover-shadow:hover { 
+            box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08)!important; 
+            transform: translateY(-2px);
+            border-color: var(--brand-light) !important;
+        }
+
+        /* Custom Modern Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Modal Customization */
+        .modal-content {
+            border: none;
+            border-radius: var(--radius-lg);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+        }
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .modal-body {
+            padding: 2rem;
+        }
 
         @media print {
             @page {
@@ -129,14 +330,14 @@
 <body>
 
 <div id="loadingOverlay">
-    <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status"></div>
+    <div class="spinner-border" style="width: 3rem; height: 3rem;" role="status"></div>
     <p class="mt-3 fw-bold text-dark">Memuat Data...</p>
     <small class="text-danger" id="errorMsg" style="display:none">Koneksi bermasalah.</small>
 </div>
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top shadow-sm">
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
     <div class="container">
-        <a class="navbar-brand" href="#"><i class="bi bi-shield-check me-2"></i>SIUL PKU</a>
+        <a class="navbar-brand" href="#"><i class="bi bi-shield-check me-2 text-info"></i>SIUL PKU</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -155,7 +356,7 @@
                     <a class="nav-link" onclick="app.nav('inspection', event)"><i class="bi bi-clipboard-check-fill me-1"></i> Uji Laik Baru</a>
                 </li>
                 <li class="nav-item ms-lg-3 mt-2 mt-lg-0">
-                    <button class="btn btn-danger btn-sm px-3 fw-bold w-100" onclick="app.logout()">
+                    <button class="btn btn-danger btn-sm px-3 fw-bold w-100 rounded-pill" onclick="app.logout()">
                         <i class="bi bi-box-arrow-right me-1"></i> Keluar
                     </button>
                 </li>
@@ -168,13 +369,13 @@
 
     <div id="page-home">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h4 class="fw-bold text-secondary">Rekapitulasi</h4>
-            <button class="btn btn-outline-primary shadow-sm" onclick="app.loadDashboard()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+            <h4 class="fw-bold text-dark m-0">Rekapitulasi Pengujian</h4>
+            <button class="btn btn-outline-primary btn-sm" onclick="app.loadDashboard()"><i class="bi bi-arrow-clockwise me-1"></i> Refresh</button>
         </div>
 
-        <div class="card shadow-sm border-0 mb-3">
-            <div class="card-body">
-                <div class="row g-2">
+        <div class="card mb-4">
+            <div class="card-body p-4">
+                <div class="row g-3">
                     <div class="col-md-3">
                         <label class="form-label small fw-bold">Tanggal Awal</label>
                         <input type="date" id="filterDateFrom" class="form-control">
@@ -196,21 +397,21 @@
                         <input type="text" id="filterKeyword" class="form-control" placeholder="Ketik kata kunci...">
                     </div>
                 </div>
-                <div class="d-flex gap-2 mt-3 flex-wrap">
-                    <button class="btn btn-primary btn-sm" onclick="app.applyRecapFilters()"><i class="bi bi-funnel"></i> Terapkan Filter</button>
-                    <button class="btn btn-outline-secondary btn-sm" onclick="app.resetRecapFilters()"><i class="bi bi-x-circle"></i> Reset</button>
-                    <button class="btn btn-dark btn-sm" onclick="app.printSelectedRecap()"><i class="bi bi-printer"></i> Cetak Rekap Terpilih</button>
+                <div class="d-flex gap-2 mt-4 flex-wrap">
+                    <button class="btn btn-primary btn-sm px-3" onclick="app.applyRecapFilters()"><i class="bi bi-funnel me-1"></i> Terapkan Filter</button>
+                    <button class="btn btn-light btn-sm border px-3 text-secondary" onclick="app.resetRecapFilters()"><i class="bi bi-x-circle me-1"></i> Reset</button>
+                    <button class="btn btn-dark btn-sm px-3 ms-md-auto" onclick="app.printSelectedRecap()"><i class="bi bi-printer me-1"></i> Cetak Rekap Terpilih</button>
                 </div>
             </div>
         </div>
 
-        <div class="card shadow-sm border-0">
+        <div class="card overflow-hidden">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-light">
                         <tr>
                             <th class="ps-4 py-3 text-center" style="width:50px;">
-                                <input type="checkbox" id="recapSelectAll" onchange="app.toggleSelectAllRecap(this.checked)">
+                                <input type="checkbox" id="recapSelectAll" class="form-check-input" onchange="app.toggleSelectAllRecap(this.checked)">
                             </th>
                             <th class="py-3">Tanggal</th>
                             <th>Aset / Unit</th>
@@ -227,40 +428,40 @@
 
     <div id="page-dashboard" class="d-none">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h4 class="fw-bold text-secondary">Dashboard Kendaraan</h4>
-            <button class="btn btn-outline-primary shadow-sm" onclick="app.loadVehicleDashboard()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+            <h4 class="fw-bold text-dark m-0">Dashboard Kendaraan</h4>
+            <button class="btn btn-outline-primary btn-sm" onclick="app.loadVehicleDashboard()"><i class="bi bi-arrow-clockwise me-1"></i> Refresh</button>
         </div>
 
-        <div class="row g-3 mb-3">
+        <div class="row g-3 mb-4">
             <div class="col-md-4">
-                <div class="card shadow-sm border-0 h-100">
-                    <div class="card-body">
-                        <p class="text-muted mb-1">Total Kendaraan/GSE</p>
-                        <h3 class="fw-bold mb-0" id="metricTotalAll">0</h3>
+                <div class="card h-100 border-start border-primary border-4">
+                    <div class="card-body p-4">
+                        <p class="metric-title mb-1">Total Kendaraan/GSE</p>
+                        <h3 class="metric-value mb-0" id="metricTotalAll">0</h3>
                     </div>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="card shadow-sm border-0 h-100">
-                    <div class="card-body">
-                        <p class="text-muted mb-1">Total Motorized</p>
-                        <h3 class="fw-bold mb-0 text-danger" id="metricTotalMotorized">0</h3>
+                <div class="card h-100 border-start border-danger border-4">
+                    <div class="card-body p-4">
+                        <p class="metric-title mb-1">Total Motorized</p>
+                        <h3 class="metric-value mb-0 text-danger" id="metricTotalMotorized">0</h3>
                     </div>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="card shadow-sm border-0 h-100">
-                    <div class="card-body">
-                        <p class="text-muted mb-1">Total Non-Motorized</p>
-                        <h3 class="fw-bold mb-0 text-success" id="metricTotalNonMotorized">0</h3>
+                <div class="card h-100 border-start border-success border-4">
+                    <div class="card-body p-4">
+                        <p class="metric-title mb-1">Total Non-Motorized</p>
+                        <h3 class="metric-value mb-0 text-success" id="metricTotalNonMotorized">0</h3>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="card shadow-sm border-0">
-            <div class="card-header bg-light">
-                <h6 class="mb-0 fw-bold text-secondary">Matriks Kendaraan per Pemilik/Perusahaan</h6>
+        <div class="card overflow-hidden">
+            <div class="card-header bg-white py-3">
+                <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-grid-3x3-gap me-2 text-primary"></i>Matriks Kendaraan per Pemilik/Perusahaan</h6>
             </div>
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
@@ -279,17 +480,17 @@
     </div>
 
     <div id="page-database" class="d-none">
-        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-            <h4 class="fw-bold text-secondary mb-0">Database Kendaraan/GSE</h4>
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+            <h4 class="fw-bold text-dark mb-0">Database Kendaraan/GSE</h4>
             <div class="d-flex gap-2">
-                <div class="input-group">
-                    <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
+                <div class="input-group" style="max-width: 280px;">
+                    <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-search"></i></span>
                     <input type="text" id="assetSearchInput" class="form-control border-start-0" placeholder="Cari Nama/Plat/GSE..." onkeyup="app.filterAssets(this.value)">
                 </div>
-                <button class="btn btn-primary shadow-sm text-nowrap" onclick="app.showAssetModal()"><i class="bi bi-plus-lg"></i> Tambah Unit</button>
+                <button class="btn btn-primary text-nowrap shadow-sm d-flex align-items-center" onclick="app.showAssetModal()"><i class="bi bi-plus-lg me-2"></i> Tambah Unit</button>
             </div>
         </div>
-        <div class="card shadow-sm border-0">
+        <div class="card overflow-hidden">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-light">
@@ -310,11 +511,11 @@
     <div id="page-inspection" class="d-none">
         <div class="row justify-content-center">
             <div class="col-lg-10">
-                <div class="card shadow-sm border-0">
-                    <div class="card-header bg-primary text-white py-3">
-                        <h5 class="mb-0 fw-bold"><i class="bi bi-file-earmark-check me-2"></i>Formulir Uji Laik</h5>
+                <div class="card">
+                    <div class="card-header bg-dark text-white py-3 border-0" style="background: linear-gradient(135deg, var(--brand-blue) 0%, var(--brand-light) 100%) !important;">
+                        <h5 class="mb-0 fw-bold d-flex align-items-center"><i class="bi bi-file-earmark-check me-2 text-info"></i>Formulir Uji Laik Operasional</h5>
                     </div>
-                    <div class="card-body p-4">
+                    <div class="card-body p-4 p-md-5">
                         <form id="inspectionForm">
                             <input type="hidden" id="editInspectionId">
                             
@@ -329,73 +530,77 @@
                                 </div>
                             </div>
 
-                            <div class="alert alert-light border d-flex align-items-center mb-4 shadow-sm">
+                            <div class="alert alert-light border d-flex align-items-center mb-5 p-3 rounded-3 bg-white shadow-sm border-start border-primary border-3">
                                 <div class="me-3" id="assetPhotoPreviewForm">
-                                    <div class="bg-secondary text-white rounded d-flex align-items-center justify-content-center" style="width:60px; height:60px;">
-                                        <i class="bi bi-image fs-4"></i>
+                                    <div class="bg-light text-muted rounded d-flex align-items-center justify-content-center border" style="width:64px; height:64px;">
+                                        <i class="bi bi-image fs-3"></i>
                                     </div>
                                 </div>
                                 <div>
-                                    <small id="assetDetailInfo" class="mb-0 text-muted fw-bold">Silakan pilih aset untuk melihat detail...</small>
+                                    <small id="assetDetailInfo" class="mb-0 text-muted fw-bold d-block">Silakan pilih aset untuk melihat spesifikasi detail...</small>
                                 </div>
                             </div>
 
-                            <h6 class="fw-bold border-bottom pb-2 mb-3 text-primary">Item Pemeriksaan (Checklist)</h6>
-                            <div class="row g-2" id="checklistContainer"></div>
+                            <h6 class="fw-bold border-bottom pb-2 mb-3 text-primary d-flex align-items-center"><i class="bi bi-list-check me-2"></i>Item Pemeriksaan (Checklist Mandatori)</h6>
+                            <div class="row g-3" id="checklistContainer"></div>
 
-                            <div class="mb-4 mt-4">
-                                <label for="inspectionNotes" class="form-label fw-bold h6">Notes / Catatan:</label>
-                                <textarea id="inspectionNotes" class="form-control" rows="3" placeholder="Masukkan catatan pengujian..."></textarea>
+                            <div class="mb-4 mt-5">
+                                <label for="inspectionNotes" class="form-label fw-bold h6 text-dark">Notes / Catatan Lapangan:</label>
+                                <textarea id="inspectionNotes" class="form-control" rows="3" placeholder="Masukkan detail kendala atau catatan khusus pengujian..."></textarea>
                             </div>
-                            <hr class="my-4">
+                            <hr class="my-4 text-muted">
 
-                            <div class="mb-4">
-                                <label class="form-label fw-bold h6">Hasil Akhir Pengujian:</label>
-                                <div class="d-flex gap-3 mt-2">
-                                    <div class="form-check flex-fill p-3 border rounded bg-light text-center cursor-pointer hover-shadow">
-                                        <input class="form-check-input float-none me-2" type="radio" name="finalResult" id="resFail" value="Pending" checked onchange="app.toggleSignatures()">
-                                        <label class="form-check-label text-danger fw-bold d-block mt-1 cursor-pointer" for="resFail">TIDAK MEMENUHI (Pending)</label>
+                            <div class="mb-5">
+                                <label class="form-label fw-bold h6 text-dark mb-3">Hasil Akhir Kelayakan:</label>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="form-check p-3 border rounded-3 text-center cursor-pointer hover-shadow m-0 d-flex align-items-center justify-content-center bg-white">
+                                            <input class="form-check-input me-3" type="radio" name="finalResult" id="resFail" value="Pending" checked onchange="app.toggleSignatures()">
+                                            <label class="form-check-label text-danger fw-bold cursor-pointer" for="resFail">TIDAK MEMENUHI (Pending)</label>
+                                        </div>
                                     </div>
-                                    <div class="form-check flex-fill p-3 border rounded bg-light text-center cursor-pointer hover-shadow">
-                                        <input class="form-check-input float-none me-2" type="radio" name="finalResult" id="resPass" value="Lulus" onchange="app.toggleSignatures()">
-                                        <label class="form-check-label text-success fw-bold d-block mt-1 cursor-pointer" for="resPass">MEMENUHI</label>
+                                    <div class="col-md-6">
+                                        <div class="form-check p-3 border rounded-3 text-center cursor-pointer hover-shadow m-0 d-flex align-items-center justify-content-center bg-white">
+                                            <input class="form-check-input me-3" type="radio" name="finalResult" id="resPass" value="Lulus" onchange="app.toggleSignatures()">
+                                            <label class="form-check-label text-success fw-bold cursor-pointer" for="resPass">MEMENUHI SYARAT (Lulus)</label>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div id="signatureSection" class="d-none bg-light p-4 rounded border mb-4 shadow-sm">
-                                <h6 class="text-center fw-bold mb-4 text-uppercase text-secondary">Pengesahan Inspektor</h6>
+                            <div id="signatureSection" class="d-none bg-light p-4 rounded-3 border mb-5 shadow-sm">
+                                <h6 class="text-center fw-bold mb-4 text-uppercase text-secondary letter-spacing-1">Pengesahan Otoritas Inspektor</h6>
                                 <div class="row text-center g-3">
                                     <div class="col-md-4">
-                                        <div class="card p-3 h-100 shadow-sm border-0">
-                                            <label class="fw-bold mb-2 small text-uppercase">AE</label>
-                                            <input type="text" id="inspNameEME" class="form-control form-control-sm mb-2 text-center" placeholder="Nama">
+                                        <div class="card p-3 h-100 border-0 shadow-sm bg-white">
+                                            <label class="fw-bold mb-2 small text-uppercase text-primary">AE</label>
+                                            <input type="text" id="inspNameEME" class="form-control form-control-sm mb-3 text-center" placeholder="Nama Pemeriksa">
                                             <canvas id="sigEME" class="signature-pad" height="150"></canvas>
-                                            <button type="button" class="btn btn-sm btn-outline-danger mt-2 w-100" onclick="app.clearSig('sigEME')">Hapus</button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger mt-3 w-100" onclick="app.clearSig('sigEME')"><i class="bi bi-eraser me-1"></i> Bersihkan</button>
                                         </div>
                                     </div>
                                     <div class="col-md-4">
-                                        <div class="card p-3 h-100 shadow-sm border-0">
-                                            <label class="fw-bold mb-2 small text-uppercase">ARFF</label>
-                                            <input type="text" id="inspNameARFF" class="form-control form-control-sm mb-2 text-center" placeholder="Nama">
+                                        <div class="card p-3 h-100 border-0 shadow-sm bg-white">
+                                            <label class="fw-bold mb-2 small text-uppercase text-danger">ARFF</label>
+                                            <input type="text" id="inspNameARFF" class="form-control form-control-sm mb-3 text-center" placeholder="Nama Pemeriksa">
                                             <canvas id="sigARFF" class="signature-pad" height="150"></canvas>
-                                            <button type="button" class="btn btn-sm btn-outline-danger mt-2 w-100" onclick="app.clearSig('sigARFF')">Hapus</button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger mt-3 w-100" onclick="app.clearSig('sigARFF')"><i class="bi bi-eraser me-1"></i> Bersihkan</button>
                                         </div>
                                     </div>
                                     <div class="col-md-4">
-                                        <div class="card p-3 h-100 shadow-sm border-0">
-                                            <label class="fw-bold mb-2 small text-uppercase">AMC</label>
-                                            <input type="text" id="inspNameAMC" class="form-control form-control-sm mb-2 text-center" placeholder="Nama">
+                                        <div class="card p-3 h-100 border-0 shadow-sm bg-white">
+                                            <label class="fw-bold mb-2 small text-uppercase text-success">AMC</label>
+                                            <input type="text" id="inspNameAMC" class="form-control form-control-sm mb-3 text-center" placeholder="Nama Pemeriksa">
                                             <canvas id="sigAMC" class="signature-pad" height="150"></canvas>
-                                            <button type="button" class="btn btn-sm btn-outline-danger mt-2 w-100" onclick="app.clearSig('sigAMC')">Hapus</button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger mt-3 w-100" onclick="app.clearSig('sigAMC')"><i class="bi bi-eraser me-1"></i> Bersihkan</button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
                             <div class="d-flex justify-content-end gap-2">
-                                <button type="button" class="btn btn-light px-4" onclick="app.nav('home', event)">Batal</button>
-                                <button type="submit" id="btnSubmitInspection" class="btn btn-success px-5 fw-bold shadow-sm">Simpan Data</button>
+                                <button type="button" class="btn btn-light px-4 border" onclick="app.nav('home', event)">Batal</button>
+                                <button type="submit" id="btnSubmitInspection" class="btn btn-success px-5 fw-bold shadow-sm">Simpan Laporan</button>
                             </div>
                         </form>
                     </div>
@@ -406,25 +611,25 @@
 </div>
 
 <div class="modal fade" id="assetModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="assetModalTitle">Registrasi Aset</h5>
+            <div class="modal-header bg-dark text-white border-0" style="background-color: var(--brand-blue) !important;">
+                <h5 class="modal-title fw-bold" id="assetModalTitle"><i class="bi bi-car-front-fill me-2"></i>Registrasi Unit/Aset Baru</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <form id="assetForm">
                     <input type="hidden" id="editAssetId">
                     <input type="hidden" id="existingPhotoUrl">
-                    <div class="text-center mb-4 p-3 bg-light rounded border">
-                        <img id="imgPreview" src="https://via.placeholder.com/150?text=No+Image" class="rounded border shadow-sm" style="width: 150px; height: 150px; object-fit: cover;">
-                        <div class="mt-3">
-                            <label class="btn btn-sm btn-outline-primary shadow-sm"><i class="bi bi-camera"></i> Upload Foto<input type="file" id="astPhoto" class="d-none" accept="image/*" onchange="app.previewFile()"></label>
+                    <div class="text-center mb-4 p-4 bg-light rounded-3 border">
+                        <img id="imgPreview" src="https://via.placeholder.com/150?text=No+Image" class="rounded-3 border shadow-sm mb-3" style="width: 140px; height: 140px; object-fit: cover;">
+                        <div>
+                            <label class="btn btn-sm btn-outline-primary shadow-sm px-3"><i class="bi bi-camera me-1"></i> Ambil/Upload Foto<input type="file" id="astPhoto" class="d-none" accept="image/*" onchange="app.previewFile()"></label>
                         </div>
                     </div>
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label small fw-bold">Pemilik</label>
+                            <label class="form-label small fw-bold">Pemilik / Ground Handler</label>
                             <select id="astOwner" class="form-select" required>
                                 <option value="">-- Pilih Pemilik --</option>
                                 <option value="PT. Gapura Angkasa">PT. Gapura Angkasa</option>
@@ -452,16 +657,16 @@
                                 <option value="Anugrah Berlian Lestari">Anugrah Berlian Lestari</option>
                             </select>
                         </div>
-                        <div class="col-md-6"><label class="form-label small fw-bold">Jenis</label><select id="astType" class="form-select"><option value="Motorized">Motorized</option><option value="Non-Motorized">Non-Motorized</option></select></div>
-                        <div class="col-md-6"><label class="form-label small fw-bold">Nama Aset</label><input type="text" id="astName" class="form-control" required></div>
+                        <div class="col-md-6"><label class="form-label small fw-bold">Jenis Klasifikasi</label><select id="astType" class="form-select"><option value="Motorized">Motorized</option><option value="Non-Motorized">Non-Motorized</option></select></div>
+                        <div class="col-md-6"><label class="form-label small fw-bold">Nama Peralatan/Aset</label><input type="text" id="astName" class="form-control" required></div>
                         <div class="col-md-6"><label class="form-label small fw-bold">Bahan Bakar</label><select id="astFuel" class="form-select"><option value="-">-</option><option value="Bensin">Bensin</option><option value="Solar">Solar</option><option value="Listrik">Listrik</option></select></div>
-                        <div class="col-md-6"><label class="form-label small fw-bold">No. Polisi</label><input type="text" id="astPlate" class="form-control"></div>
-                        <div class="col-md-6"><label class="form-label small fw-bold">No. GSE</label><input type="text" id="astGseNo" class="form-control" required></div>
-                        <div class="col-md-6"><label class="form-label small fw-bold">Dimensi</label><input type="text" id="astDim" class="form-control"></div>
-                        <div class="col-md-6"><label class="form-label small fw-bold">Fungsi</label><input type="text" id="astUsage" class="form-control" required></div>
+                        <div class="col-md-6"><label class="form-label small fw-bold">No. Polisi / Plat Internal</label><input type="text" id="astPlate" class="form-control"></div>
+                        <div class="col-md-6"><label class="form-label small fw-bold">No. Registrasi GSE</label><input type="text" id="astGseNo" class="form-control" required></div>
+                        <div class="col-md-6"><label class="form-label small fw-bold">Dimensi (L x W x H)</label><input type="text" id="astDim" class="form-control"></div>
+                        <div class="col-md-6"><label class="form-label small fw-bold">Fungsi Utama</label><input type="text" id="astUsage" class="form-control" required></div>
                     </div>
                     <div class="text-end mt-4">
-                        <button type="submit" id="btnSaveAsset" class="btn btn-primary px-4 shadow-sm">Simpan Aset</button>
+                        <button type="submit" id="btnSaveAsset" class="btn btn-primary px-4 shadow-sm">Simpan Spesifikasi</button>
                     </div>
                 </form>
             </div>
@@ -470,34 +675,34 @@
 </div>
 
 <div class="modal fade" id="historyModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header bg-info text-white">
-                <h5 class="modal-title fw-bold"><i class="bi bi-clock-history"></i> Riwayat Uji Laik</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <div class="modal-header bg-info text-white border-0" style="background-color: var(--brand-light) !important;">
+                <h5 class="modal-title fw-bold"><i class="bi bi-clock-history me-2"></i>Log Riwayat Uji Laik Operasi</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <div class="row mb-4 border-bottom pb-3">
+                <div class="row mb-4 border-bottom pb-4">
                     <div class="col-md-8">
-                        <h5 class="fw-bold mb-3 text-secondary">Detail Kendaraan</h5>
-                        <table class="table table-sm table-borderless small">
-                            <tr><td width="120">Nama Aset</td><td class="fw-bold" id="hist_name">-</td></tr>
-                            <tr><td>No GSE</td><td class="fw-bold" id="hist_gse">-</td></tr>
-                            <tr><td>Jenis</td><td id="hist_type">-</td></tr>
-                            <tr><td>Pemilik</td><td id="hist_owner">-</td></tr>
-                            <tr><td>Bahan Bakar</td><td id="hist_fuel">-</td></tr>
+                        <h6 class="fw-bold mb-3 text-dark text-uppercase small letter-spacing-1">Spesifikasi Teknis Unit</h6>
+                        <table class="table table-sm table-borderless small mb-0">
+                            <tr><td width="130" class="text-muted">Nama Aset</td><td class="fw-bold" id="hist_name">-</td></tr>
+                            <tr><td class="text-muted">No GSE</td><td class="fw-bold text-primary" id="hist_gse">-</td></tr>
+                            <tr><td class="text-muted">Jenis Klasifikasi</td><td id="hist_type">-</td></tr>
+                            <tr><td class="text-muted">Pemilik Instansi</td><td id="hist_owner">-</td></tr>
+                            <tr><td class="text-muted">Sumber Energi</td><td id="hist_fuel">-</td></tr>
                         </table>
                     </div>
-                    <div class="col-md-4 text-center border-start d-flex flex-col justify-content-center align-items-center">
-                        <div id="qrcode" class="p-2 border bg-white rounded"></div>
-                        <small class="d-block mt-2 text-muted" style="font-size: 10px;">Scan untuk akses riwayat</small>
+                    <div class="col-md-4 text-center border-start d-flex flex-column justify-content-center align-items-center">
+                        <div id="qrcode" class="p-2 border bg-white rounded-3 shadow-sm"></div>
+                        <small class="d-block mt-2 text-muted fw-bold" style="font-size: 10px;">SCAN QR KODE LOG HISTORI</small>
                     </div>
                 </div>
 
-                <h6 class="fw-bold text-secondary">Daftar Hasil Uji</h6>
-                <div class="table-responsive">
-                    <table class="table table-sm table-bordered table-striped">
-                        <thead class="table-light"><tr><th>Tanggal</th><th>Status</th><th class="text-center">Cetak</th></tr></thead>
+                <h6 class="fw-bold text-dark mb-3 small text-uppercase letter-spacing-1">Berkas Hasil Inspeksi Berkala</h6>
+                <div class="table-responsive rounded-3 border">
+                    <table class="table table-sm table-hover align-middle mb-0">
+                        <thead class="table-light"><tr><th class="py-2 ps-3">Tanggal Pengujian</th><th>Status Akhir</th><th class="text-center" style="width: 100px;">Cetak</th></tr></thead>
                         <tbody id="historyTableBody"></tbody>
                     </table>
                 </div>
@@ -775,23 +980,23 @@
                 const inspectorStatus = inspectorComplete ? 'Lengkap' : 'Tidak Lengkap';
                 const btnEdit = (insp.status === 'Lulus' && inspectorStatus === 'Lengkap')
                     ? ''
-                    : `<button class="btn btn-sm btn-outline-warning" onclick="app.editInspection('${insp.id}')"><i class="bi bi-pencil"></i></button>`;
+                    : `<button class="btn btn-sm btn-outline-warning me-1" onclick="app.editInspection('${insp.id}')"><i class="bi bi-pencil"></i></button>`;
 
                 const checked = this.selectedRecapIds.has(insp.id) ? 'checked' : '';
 
                 tbody.innerHTML += `
                     <tr>
                         <td class="ps-4 text-center">
-                            <input type="checkbox" ${checked} onchange="app.toggleRecapSelection('${insp.id}', this.checked)">
+                            <input type="checkbox" ${checked} class="form-check-input" onchange="app.toggleRecapSelection('${insp.id}', this.checked)">
                         </td>
                         <td class="fw-bold">${insp.date}</td>
-                        <td>${asset.name}<br><small class="text-muted">${asset.gse_no}</small></td>
-                        <td><span class="badge ${badge}">${insp.status}</span></td>
-                        <td><small>${inspectorStatus}</small></td>
+                        <td><strong>${asset.name}</strong><br><small class="text-muted">${asset.gse_no}</small></td>
+                        <td><span class="badge ${badge} px-2 py-1">${insp.status}</span></td>
+                        <td><small class="fw-medium">${inspectorStatus}</small></td>
                         <td class="text-center">
-                            <div class="btn-group">
+                            <div class="d-inline-flex">
                                 ${btnEdit}
-                                <button class="btn btn-sm btn-outline-dark" onclick="app.printReport('${insp.id}')"><i class="bi bi-printer"></i></button>
+                                <button class="btn btn-sm btn-outline-dark me-1" onclick="app.printReport('${insp.id}')"><i class="bi bi-printer"></i></button>
                                 <button class="btn btn-sm btn-outline-danger" onclick="app.deleteInspection('${insp.id}')"><i class="bi bi-trash"></i></button>
                             </div>
                         </td>
@@ -955,13 +1160,13 @@
                     tbody.innerHTML += `
                         <tr>
                             <td class="ps-4"><img src="${photo}" class="asset-thumb shadow-sm" onclick="window.open('${photo}')"></td>
-                            <td><span class="badge ${badge} mb-1">${ast.type}</span><br><strong>${ast.name}</strong></td>
-                            <td>${ast.plate || '-'}<br>${ast.gse_no}</td>
-                            <td>${ast.owner}<br><small class="text-muted">${ast.fuel}</small></td>
+                            <td><span class="badge ${badge} mb-1 small">${ast.type}</span><br><strong>${ast.name}</strong></td>
+                            <td><span class="font-monospace small fw-bold">${ast.plate || '-'}</span><br>${ast.gse_no}</td>
+                            <td><strong>${ast.owner}</strong><br><small class="text-muted">${ast.fuel}</small></td>
                             <td class="text-center">
-                                <div class="btn-group">
-                                    <button class="btn btn-sm btn-outline-info" onclick="app.showHistory('${ast.id}')"><i class="bi bi-clock-history"></i></button>
-                                    <button class="btn btn-sm btn-outline-warning" onclick="app.showAssetModal('${ast.id}')"><i class="bi bi-pencil"></i></button>
+                                <div class="d-inline-flex">
+                                    <button class="btn btn-sm btn-outline-info me-1" onclick="app.showHistory('${ast.id}')"><i class="bi bi-clock-history"></i></button>
+                                    <button class="btn btn-sm btn-outline-warning me-1" onclick="app.showAssetModal('${ast.id}')"><i class="bi bi-pencil"></i></button>
                                     <button class="btn btn-sm btn-outline-danger" onclick="app.deleteAsset('${ast.id}')"><i class="bi bi-trash"></i></button>
                                 </div>
                             </td>
@@ -1001,10 +1206,10 @@
 
             const { data } = await this.sb.from('inspections').select('*').eq('asset_id', assetId).order('date', {ascending: false});
             const tbody = document.getElementById('historyTableBody');
-            tbody.innerHTML = (!data || !data.length) ? '<tr><td colspan="3" class="text-center">Belum ada riwayat uji.</td></tr>' : '';
+            tbody.innerHTML = (!data || !data.length) ? '<tr><td colspan="3" class="text-center p-3 text-muted">Belum ada riwayat uji.</td></tr>' : '';
             if(data) data.forEach(insp => {
                 const badge = insp.status === 'Lulus' ? 'bg-success' : 'bg-warning text-dark';
-                tbody.innerHTML += `<tr><td>${insp.date}</td><td><span class="badge ${badge}">${insp.status}</span></td><td class="text-center"><button class="btn btn-sm btn-dark" onclick="app.printReport('${insp.id}')"><i class="bi bi-printer"></i></button></td></tr>`;
+                tbody.innerHTML += `<tr><td class="ps-3 fw-bold">${insp.date}</td><td><span class="badge ${badge}">${insp.status}</span></td><td class="text-center"><button class="btn btn-sm btn-dark py-1" onclick="app.printReport('${insp.id}')"><i class="bi bi-printer"></i></button></td></tr>`;
             });
             
             new bootstrap.Modal(document.getElementById('historyModal')).show();
@@ -1027,13 +1232,12 @@
 
                 const container = document.getElementById('checklistContainer');
                 container.innerHTML = '';
-                // PERBAIKAN: Menggunakan CHECKLIST_ITEMS Global
                 CHECKLIST_ITEMS.forEach((item, idx) => {
                     container.innerHTML += `
                         <div class="col-md-6">
-                            <div class="border p-2 rounded bg-white shadow-sm h-100">
-                                <span class="small fw-bold text-dark d-block mb-2">${idx + 1}. ${item}</span>
-                                <div class="d-flex gap-3 flex-wrap">
+                            <div class="border p-3 rounded-3 bg-white h-100 shadow-sm border-light">
+                                <span class="small fw-bold text-dark d-block mb-3">${idx + 1}. ${item}</span>
+                                <div class="d-flex gap-3 flex-wrap mb-2">
                                     <div class="form-check m-0">
                                         <input class="form-check-input" type="radio" name="check_${idx}" value="OK" checked>
                                         <label class="form-check-label text-success fw-bold small">OK</label>
@@ -1048,7 +1252,7 @@
                                     </div>
                                 </div>
                                 <div class="mt-2">
-                                    <input type="text" class="form-control form-control-sm" name="note_${idx}" placeholder="Catatan item (opsional)">
+                                    <input type="text" class="form-control form-control-sm bg-light" name="note_${idx}" placeholder="Tambah catatan item (opsional)">
                                 </div>
                             </div>
                         </div>`;
@@ -1061,9 +1265,9 @@
             const id = document.getElementById('selectAsset').value;
             const asset = this.cachedAssets.find(a => a.id == id);
             if(asset) {
-                document.getElementById('assetDetailInfo').innerHTML = `<span class="text-dark">${asset.name} (${asset.type})</span><br>Owner: ${asset.owner} | No: ${asset.gse_no}`;
+                document.getElementById('assetDetailInfo').innerHTML = `<span class="text-dark fw-bold fs-6">${asset.name} (${asset.type})</span><br><span class="text-secondary small">Owner: ${asset.owner} | No GSE: ${asset.gse_no}</span>`;
                 const url = asset.photo_url;
-                document.getElementById('assetPhotoPreviewForm').innerHTML = url ? `<img src="${url}" style="width:60px;height:60px;object-fit:cover;border-radius:4px">` : `<div class="bg-secondary text-white rounded d-flex align-items-center justify-content-center" style="width:60px; height:60px;"><i class="bi bi-image fs-4"></i></div>`;
+                document.getElementById('assetPhotoPreviewForm').innerHTML = url ? `<img src="${url}" class="rounded border" style="width:64px;height:64px;object-fit:cover;">` : `<div class="bg-light text-muted rounded d-flex align-items-center justify-content-center border" style="width:64px; height:64px;"><i class="bi bi-image fs-3"></i></div>`;
             }
         },
 
@@ -1233,14 +1437,12 @@
         deleteInspection: async function(id) { if(confirm("Hapus laporan?")) { await this.sb.from('inspections').delete().eq('id', id); this.loadDashboard(); } },
         loading: function(s) { document.getElementById('loadingOverlay').classList.toggle('d-none', !s); },
         
-        // PERBAIKAN: Menambahkan logic resize canvas saat bagian tanda tangan muncul
         toggleSignatures: function() { 
             const isPass = document.getElementById('resPass').checked; 
             const sigSec = document.getElementById('signatureSection');
             sigSec.classList.toggle('d-none', !isPass); 
             
             if(isPass) {
-                // Beri sedikit delay agar DOM render, lalu init canvas
                 setTimeout(() => {
                     this.initCanvas('sigEME');
                     this.initCanvas('sigARFF');
@@ -1299,7 +1501,6 @@
 
         initCanvas: function(id) {
             const c = document.getElementById(id); if (!c) return;
-            // PERBAIKAN: Pastikan parent punya lebar, jika 0 (hidden), jangan set dulu
             if(c.parentElement.offsetWidth > 0) {
                  c.width = c.parentElement.offsetWidth; 
                  c.height = 150;
@@ -1326,7 +1527,6 @@
             };
             const end = (e) => { if(e.target == c) e.preventDefault(); d = false; };
             
-            // Re-bind events (untuk memastikan tidak double bind, bisa pakai removeEventListener dulu idealnya, tapi ini ok untuk simple use)
             c.onmousedown = start; c.onmousemove = move; c.onmouseup = end; 
             c.ontouchstart = start; c.ontouchmove = move; c.ontouchend = end;
             this.canvases[id] = c;
@@ -1356,7 +1556,6 @@
             if(!insp) return;
             const asset = insp.assets || {};
             const esc = (s) => (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;');
-            // Data sudah diperbaiki di submitInspection, jadi c.name sekarang akan benar
             const rows = insp.checklist.map((c,i)=>`<tr><td style="border:1px solid #000;padding:4px;">${esc(c.name)}</td><td style="border:1px solid #000;padding:4px;">${esc(c.note || '-')}</td><td style="border:1px solid #000;text-align:center;">${esc(c.val)}</td></tr>`).join('');
             const img = (s) => s ? `<img src="${s}" height="50" style="display:block;margin:0 auto">` : '<div style="height:50px"></div>';
             const photo = asset.photo_url ? `<img src="${asset.photo_url}" style="width:120px;height:120px;object-fit:cover;border:1px solid #000">` : '';
@@ -1378,14 +1577,12 @@
 
             window.addEventListener('afterprint', cleanupPrintArea);
 
-            // Tunggu 2 frame agar layout benar-benar commit sebelum print (lebih stabil di mobile)
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
                     window.print();
                 });
             });
 
-            // Fallback panjang khusus mobile: jangan cleanup terlalu cepat
             setTimeout(cleanupPrintArea, 30000);
         }
     };
@@ -1408,4 +1605,3 @@
 
 </body>
 </html>
-

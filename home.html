@@ -143,7 +143,10 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto align-items-lg-center">
                 <li class="nav-item">
-                    <a class="nav-link active" onclick="app.nav('dashboard', event)"><i class="bi bi-grid-1x2-fill me-1"></i> Home</a>
+                    <a class="nav-link" onclick="app.nav('dashboard', event)"><i class="bi bi-speedometer2 me-1"></i> Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" onclick="app.nav('home', event)"><i class="bi bi-house-fill me-1"></i> Home</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" onclick="app.nav('database', event)"><i class="bi bi-database-fill me-1"></i> Database</a>
@@ -163,7 +166,7 @@
 
 <div class="container pb-5">
 
-    <div id="page-dashboard">
+    <div id="page-home">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h4 class="fw-bold text-secondary">Rekapitulasi</h4>
             <button class="btn btn-outline-primary shadow-sm" onclick="app.loadDashboard()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
@@ -217,6 +220,59 @@
                         </tr>
                     </thead>
                     <tbody id="recapTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="page-dashboard" class="d-none">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="fw-bold text-secondary">Dashboard Kendaraan</h4>
+            <button class="btn btn-outline-primary shadow-sm" onclick="app.loadVehicleDashboard()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+        </div>
+
+        <div class="row g-3 mb-3">
+            <div class="col-md-4">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body">
+                        <p class="text-muted mb-1">Total Kendaraan/GSE</p>
+                        <h3 class="fw-bold mb-0" id="metricTotalAll">0</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body">
+                        <p class="text-muted mb-1">Total Motorized</p>
+                        <h3 class="fw-bold mb-0 text-danger" id="metricTotalMotorized">0</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body">
+                        <p class="text-muted mb-1">Total Non-Motorized</p>
+                        <h3 class="fw-bold mb-0 text-success" id="metricTotalNonMotorized">0</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-light">
+                <h6 class="mb-0 fw-bold text-secondary">Matriks Kendaraan per Pemilik/Perusahaan</h6>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4 py-3">Pemilik/Perusahaan</th>
+                            <th class="text-center">Motorized</th>
+                            <th class="text-center">Non-Motorized</th>
+                            <th class="text-center">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="vehicleMatrixBody"></tbody>
                 </table>
             </div>
         </div>
@@ -338,7 +394,7 @@
                             </div>
 
                             <div class="d-flex justify-content-end gap-2">
-                                <button type="button" class="btn btn-light px-4" onclick="app.nav('dashboard', event)">Batal</button>
+                                <button type="button" class="btn btn-light px-4" onclick="app.nav('home', event)">Batal</button>
                                 <button type="submit" id="btnSubmitInspection" class="btn btn-success px-5 fw-bold shadow-sm">Simpan Data</button>
                             </div>
                         </form>
@@ -515,6 +571,7 @@
         cachedAssets: [],
         cachedInspections: [],
         filteredInspections: [],
+        vehicleDashboardSummary: null,
         selectedRecapIds: new Set(),
         canvases: {},
         tomSelect: null,
@@ -545,8 +602,8 @@
                         this.showHistory(historyId);
                         window.history.replaceState({}, document.title, window.location.pathname);
                     }, 1500); 
-                } else {
-                    this.nav('dashboard');
+            } else {
+                    this.nav('home');
                 }
                 
             } catch (e) {
@@ -594,14 +651,16 @@
             } else {
                 const links = document.querySelectorAll('.nav-link');
                 if(page === 'dashboard') links[0].classList.add('active');
-                if(page === 'database') links[1].classList.add('active');
-                if(page === 'inspection') links[2].classList.add('active');
+                if(page === 'home') links[1].classList.add('active');
+                if(page === 'database') links[2].classList.add('active');
+                if(page === 'inspection') links[3].classList.add('active');
             }
             
             const navCollapse = document.getElementById('navbarNav');
             if(navCollapse.classList.contains('show')) new bootstrap.Collapse(navCollapse).hide();
 
-            if(page === 'dashboard') this.loadDashboard();
+            if(page === 'home') this.loadDashboard();
+            if(page === 'dashboard') this.loadVehicleDashboard();
             if(page === 'database') this.loadAssetsTable(); 
             if(page === 'inspection') {
                 this.resetForm();
@@ -621,6 +680,75 @@
                 if (selectAll) selectAll.checked = false;
                 this.renderDashboardTable(this.filteredInspections);
             } catch (err) { console.error(err); alert("Gagal memuat data."); } finally { this.loading(false); }
+        },
+
+        loadVehicleDashboard: async function() {
+            this.loading(true);
+            try {
+                const { data, error } = await this.sb.from('assets').select('owner, type');
+                if (error) throw error;
+
+                const rows = data || [];
+                const summary = {
+                    totalAll: rows.length,
+                    totalMotorized: 0,
+                    totalNonMotorized: 0,
+                    byOwner: {}
+                };
+
+                rows.forEach((asset) => {
+                    const owner = (asset.owner || 'Tanpa Pemilik').trim();
+                    const type = (asset.type || '').trim().toLowerCase();
+                    const isMotorized = type === 'motorized';
+                    const isNonMotorized = type === 'non-motorized';
+
+                    if (isMotorized) summary.totalMotorized += 1;
+                    if (isNonMotorized) summary.totalNonMotorized += 1;
+
+                    if (!summary.byOwner[owner]) {
+                        summary.byOwner[owner] = { motorized: 0, nonMotorized: 0, total: 0 };
+                    }
+
+                    if (isMotorized) summary.byOwner[owner].motorized += 1;
+                    if (isNonMotorized) summary.byOwner[owner].nonMotorized += 1;
+                    summary.byOwner[owner].total += 1;
+                });
+
+                this.vehicleDashboardSummary = summary;
+                this.renderVehicleDashboard(summary);
+            } catch (err) {
+                console.error(err);
+                alert("Gagal memuat data dashboard kendaraan.");
+            } finally {
+                this.loading(false);
+            }
+        },
+
+        renderVehicleDashboard: function(summary) {
+            document.getElementById('metricTotalAll').innerText = summary?.totalAll || 0;
+            document.getElementById('metricTotalMotorized').innerText = summary?.totalMotorized || 0;
+            document.getElementById('metricTotalNonMotorized').innerText = summary?.totalNonMotorized || 0;
+
+            const tbody = document.getElementById('vehicleMatrixBody');
+            const byOwner = summary?.byOwner || {};
+            const owners = Object.keys(byOwner).sort((a, b) => a.localeCompare(b, 'id'));
+
+            if (!owners.length) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center p-4 text-muted">Belum ada data kendaraan.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = owners.map((owner) => {
+                const row = byOwner[owner];
+                return `
+                    <tr>
+                        <td class="ps-4 fw-bold">${owner}</td>
+                        <td class="text-center">${row.motorized}</td>
+                        <td class="text-center">${row.nonMotorized}</td>
+                        <td class="text-center fw-bold">${row.total}</td>
+                    </tr>
+                `;
+            }).join('');
         },
 
         renderDashboardTable: function(data) {
@@ -1008,7 +1136,7 @@
 
             const { error } = id ? await this.sb.from('inspections').update(payload).eq('id', id) : await this.sb.from('inspections').insert([payload]);
             this.loading(false);
-            if(error) alert("Error: " + error.message); else { alert("Data Tersimpan!"); this.nav('dashboard'); }
+            if(error) alert("Error: " + error.message); else { alert("Data Tersimpan!"); this.nav('home'); }
         },
 
         editInspection: async function(id) {

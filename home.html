@@ -168,12 +168,48 @@
             <h4 class="fw-bold text-secondary">Rekapitulasi</h4>
             <button class="btn btn-outline-primary shadow-sm" onclick="app.loadDashboard()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
         </div>
+
+        <div class="card shadow-sm border-0 mb-3">
+            <div class="card-body">
+                <div class="row g-2">
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold">Tanggal Awal</label>
+                        <input type="date" id="filterDateFrom" class="form-control">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold">Tanggal Akhir</label>
+                        <input type="date" id="filterDateTo" class="form-control">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small fw-bold">Status</label>
+                        <select id="filterStatus" class="form-select">
+                            <option value="">Semua</option>
+                            <option value="Lulus">Lulus</option>
+                            <option value="Pending">Pending</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold">Cari Aset/No GSE/Inspektor</label>
+                        <input type="text" id="filterKeyword" class="form-control" placeholder="Ketik kata kunci...">
+                    </div>
+                </div>
+                <div class="d-flex gap-2 mt-3 flex-wrap">
+                    <button class="btn btn-primary btn-sm" onclick="app.applyRecapFilters()"><i class="bi bi-funnel"></i> Terapkan Filter</button>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="app.resetRecapFilters()"><i class="bi bi-x-circle"></i> Reset</button>
+                    <button class="btn btn-dark btn-sm" onclick="app.printSelectedRecap()"><i class="bi bi-printer"></i> Cetak Rekap Terpilih</button>
+                </div>
+            </div>
+        </div>
+
         <div class="card shadow-sm border-0">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th class="ps-4 py-3">Tanggal</th>
+                            <th class="ps-4 py-3 text-center" style="width:50px;">
+                                <input type="checkbox" id="recapSelectAll" onchange="app.toggleSelectAllRecap(this.checked)">
+                            </th>
+                            <th class="py-3">Tanggal</th>
                             <th>Aset / Unit</th>
                             <th>Status</th>
                             <th>Inspektor</th>
@@ -477,8 +513,16 @@
     const app = {
         sb: null,
         cachedAssets: [],
+        cachedInspections: [],
+        filteredInspections: [],
+        selectedRecapIds: new Set(),
         canvases: {},
         tomSelect: null,
+        signatureLocks: {
+            sigEME: false,
+            sigARFF: false,
+            sigAMC: false
+        },
         
         init: async function() {
             try {
@@ -560,10 +604,8 @@
             if(page === 'dashboard') this.loadDashboard();
             if(page === 'database') this.loadAssetsTable(); 
             if(page === 'inspection') {
-                if(!document.getElementById('editInspectionId').value) {
-                    this.resetForm(); 
-                    this.loadAssetSelect();
-                }
+                this.resetForm();
+                this.loadAssetSelect();
             }
         },
 
@@ -572,45 +614,183 @@
             try {
                 const { data, error } = await this.sb.from('inspections').select('*, assets(*)').order('date', {ascending: false});
                 if(error) throw error;
-
-                const tbody = document.getElementById('recapTableBody');
-                if (!data || data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="text-center p-4 text-muted">Belum ada data.</td></tr>';
-                } else {
-                    tbody.innerHTML = '';
-                    data.forEach(insp => {
-                        const asset = insp.assets || { name: 'Unit Terhapus', gse_no: '-' };
-                        const isPass = insp.status === 'Lulus';
-                        const badge = isPass ? 'bg-success' : 'bg-warning text-dark';
-
-                        const names = insp.inspector_names || {};
-                        const hasAllInspectorNames = Boolean(
-                            (names.eme || '').trim() &&
-                            (names.arff || '').trim() &&
-                            (names.amc || '').trim()
-                        );
-                        const inspectorStatus = hasAllInspectorNames ? 'Lengkap' : 'Tidak Lengkap';
-                        const btnEdit = (insp.status === 'Lulus' && inspectorStatus === 'Lengkap')
-                            ? ''
-                            : `<button class="btn btn-sm btn-outline-warning" onclick="app.editInspection('${insp.id}')"><i class="bi bi-pencil"></i></button>`;
-                        
-                        tbody.innerHTML += `
-                            <tr>
-                                <td class="ps-4 fw-bold">${insp.date}</td>
-                                <td>${asset.name}<br><small class="text-muted">${asset.gse_no}</small></td>
-                                <td><span class="badge ${badge}">${insp.status}</span></td>
-                                <td><small>${inspectorStatus}</small></td>
-                                <td class="text-center">
-                                    <div class="btn-group">
-                                        ${btnEdit}
-                                        <button class="btn btn-sm btn-outline-dark" onclick="app.printReport('${insp.id}')"><i class="bi bi-printer"></i></button>
-                                        <button class="btn btn-sm btn-outline-danger" onclick="app.deleteInspection('${insp.id}')"><i class="bi bi-trash"></i></button>
-                                    </div>
-                                </td>
-                            </tr>`;
-                    });
-                }
+                this.cachedInspections = data || [];
+                this.filteredInspections = [...this.cachedInspections];
+                this.selectedRecapIds = new Set();
+                const selectAll = document.getElementById('recapSelectAll');
+                if (selectAll) selectAll.checked = false;
+                this.renderDashboardTable(this.filteredInspections);
             } catch (err) { console.error(err); alert("Gagal memuat data."); } finally { this.loading(false); }
+        },
+
+        renderDashboardTable: function(data) {
+            const tbody = document.getElementById('recapTableBody');
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center p-4 text-muted">Belum ada data.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = '';
+            data.forEach(insp => {
+                const asset = insp.assets || { name: 'Unit Terhapus', gse_no: '-' };
+                const isPass = insp.status === 'Lulus';
+                const badge = isPass ? 'bg-success' : 'bg-warning text-dark';
+
+                const names = insp.inspector_names || {};
+                const inspectorComplete = (typeof insp.inspector_complete === 'boolean')
+                    ? insp.inspector_complete
+                    : Boolean(
+                        (names.eme || '').trim() &&
+                        (names.arff || '').trim() &&
+                        (names.amc || '').trim()
+                    );
+                const inspectorStatus = inspectorComplete ? 'Lengkap' : 'Tidak Lengkap';
+                const btnEdit = (insp.status === 'Lulus' && inspectorStatus === 'Lengkap')
+                    ? ''
+                    : `<button class="btn btn-sm btn-outline-warning" onclick="app.editInspection('${insp.id}')"><i class="bi bi-pencil"></i></button>`;
+
+                const checked = this.selectedRecapIds.has(insp.id) ? 'checked' : '';
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="ps-4 text-center">
+                            <input type="checkbox" ${checked} onchange="app.toggleRecapSelection('${insp.id}', this.checked)">
+                        </td>
+                        <td class="fw-bold">${insp.date}</td>
+                        <td>${asset.name}<br><small class="text-muted">${asset.gse_no}</small></td>
+                        <td><span class="badge ${badge}">${insp.status}</span></td>
+                        <td><small>${inspectorStatus}</small></td>
+                        <td class="text-center">
+                            <div class="btn-group">
+                                ${btnEdit}
+                                <button class="btn btn-sm btn-outline-dark" onclick="app.printReport('${insp.id}')"><i class="bi bi-printer"></i></button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="app.deleteInspection('${insp.id}')"><i class="bi bi-trash"></i></button>
+                            </div>
+                        </td>
+                    </tr>`;
+            });
+        },
+
+        toggleRecapSelection: function(id, checked) {
+            if (checked) this.selectedRecapIds.add(id);
+            else this.selectedRecapIds.delete(id);
+            const selectAll = document.getElementById('recapSelectAll');
+            if (selectAll) {
+                selectAll.checked = this.filteredInspections.length > 0 && this.filteredInspections.every(x => this.selectedRecapIds.has(x.id));
+            }
+        },
+
+        toggleSelectAllRecap: function(checked) {
+            if (checked) {
+                this.filteredInspections.forEach(x => this.selectedRecapIds.add(x.id));
+            } else {
+                this.filteredInspections.forEach(x => this.selectedRecapIds.delete(x.id));
+            }
+            this.renderDashboardTable(this.filteredInspections);
+        },
+
+        applyRecapFilters: function() {
+            const from = document.getElementById('filterDateFrom').value;
+            const to = document.getElementById('filterDateTo').value;
+            const status = document.getElementById('filterStatus').value;
+            const keyword = (document.getElementById('filterKeyword').value || '').toLowerCase().trim();
+
+            this.filteredInspections = this.cachedInspections.filter(insp => {
+                const asset = insp.assets || {};
+                const names = insp.inspector_names || {};
+                const inspectorText = `${names.eme || ''} ${names.arff || ''} ${names.amc || ''}`.toLowerCase();
+
+                const dateOk = (!from || insp.date >= from) && (!to || insp.date <= to);
+                const statusOk = !status || insp.status === status;
+                const keywordTarget = `${asset.name || ''} ${asset.gse_no || ''} ${asset.plate || ''} ${inspectorText}`.toLowerCase();
+                const keywordOk = !keyword || keywordTarget.includes(keyword);
+
+                return dateOk && statusOk && keywordOk;
+            });
+
+            const selectAll = document.getElementById('recapSelectAll');
+            if (selectAll) selectAll.checked = false;
+            this.renderDashboardTable(this.filteredInspections);
+        },
+
+        resetRecapFilters: function() {
+            document.getElementById('filterDateFrom').value = '';
+            document.getElementById('filterDateTo').value = '';
+            document.getElementById('filterStatus').value = '';
+            document.getElementById('filterKeyword').value = '';
+            this.filteredInspections = [...this.cachedInspections];
+            this.selectedRecapIds = new Set();
+            const selectAll = document.getElementById('recapSelectAll');
+            if (selectAll) selectAll.checked = false;
+            this.renderDashboardTable(this.filteredInspections);
+        },
+
+        printSelectedRecap: function() {
+            const selected = this.filteredInspections.filter(x => this.selectedRecapIds.has(x.id));
+            const dataToPrint = selected.length ? selected : this.filteredInspections;
+
+            if (!dataToPrint.length) {
+                alert("Tidak ada data untuk dicetak.");
+                return;
+            }
+
+            const esc = (s) => (s || '').toString().replace(/&/g, '&amp;').replace(/</g, '<');
+            const rows = dataToPrint.map((insp, i) => {
+                const asset = insp.assets || {};
+                const names = insp.inspector_names || {};
+                const inspector = [names.eme, names.arff, names.amc].filter(Boolean).join(', ') || '-';
+                return `<tr>
+                    <td style="border:1px solid #000;padding:6px;text-align:center;">${i + 1}</td>
+                    <td style="border:1px solid #000;padding:6px;">${esc(insp.date)}</td>
+                    <td style="border:1px solid #000;padding:6px;">${esc(asset.name || '-')}</td>
+                    <td style="border:1px solid #000;padding:6px;">${esc(asset.gse_no || '-')}</td>
+                    <td style="border:1px solid #000;padding:6px;text-align:center;">${esc(insp.status || '-')}</td>
+                    <td style="border:1px solid #000;padding:6px;">${esc(inspector)}</td>
+                    <td style="border:1px solid #000;padding:6px;">${esc(insp.notes || '-')}</td>
+                </tr>`;
+            }).join('');
+
+            const html = `
+                <div class="print-sheet" style="font-family:Arial;padding:0 20px 20px 20px;color:black">
+                    <h3 style="text-align:center;text-decoration:underline;margin-top:0;">REKAPITULASI UJI LAIK</h3>
+                    <p style="text-align:center;margin:0 0 12px 0;">Total Data: <strong>${dataToPrint.length}</strong></p>
+                    <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                        <thead style="background:#ddd;">
+                            <tr>
+                                <th style="border:1px solid #000;padding:6px;">No</th>
+                                <th style="border:1px solid #000;padding:6px;">Tanggal</th>
+                                <th style="border:1px solid #000;padding:6px;">Aset</th>
+                                <th style="border:1px solid #000;padding:6px;">No GSE</th>
+                                <th style="border:1px solid #000;padding:6px;">Status</th>
+                                <th style="border:1px solid #000;padding:6px;">Inspektor</th>
+                                <th style="border:1px solid #000;padding:6px;">Catatan</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                    <div style="margin-top:20px;text-align:right;font-size:10px">Dicetak: ${new Date().toLocaleString()}</div>
+                </div>`;
+
+            const printArea = document.getElementById('printArea');
+            printArea.innerHTML = html;
+            printArea.classList.remove('d-none');
+
+            let cleaned = false;
+            const cleanupPrintArea = () => {
+                if (cleaned) return;
+                cleaned = true;
+                printArea.classList.add('d-none');
+                printArea.innerHTML = '';
+                window.removeEventListener('afterprint', cleanupPrintArea);
+            };
+
+            window.addEventListener('afterprint', cleanupPrintArea);
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    window.print();
+                });
+            });
+            setTimeout(cleanupPrintArea, 30000);
         },
 
         loadAssetsTable: async function() {
@@ -764,13 +944,48 @@
             const assetId = document.getElementById('selectAsset').value;
             if(!assetId) return alert("Pilih Aset!");
             this.loading(true);
+
             const status = document.querySelector('input[name="finalResult"]:checked').value;
+            const id = document.getElementById('editInspectionId').value;
+
+            let existing = null;
+            if (id) {
+                const { data } = await this.sb.from('inspections').select('inspector_names, signatures').eq('id', id).single();
+                existing = data || null;
+            }
+
+            const oldNames = existing?.inspector_names || {};
+            const oldSigs = existing?.signatures || {};
+
             let inspNames = { eme: '', arff: '', amc: '' };
             let sigs = { eme: null, arff: null, amc: null };
+            let inspectorComplete = false;
 
             if(status === 'Lulus') {
-                inspNames = { eme: document.getElementById('inspNameEME').value, arff: document.getElementById('inspNameARFF').value, amc: document.getElementById('inspNameAMC').value };
-                sigs = { eme: this.canvases['sigEME']?.toDataURL() || null, arff: this.canvases['sigARFF']?.toDataURL() || null, amc: this.canvases['sigAMC']?.toDataURL() || null };
+                const newNameEME = (document.getElementById('inspNameEME').value || '').trim();
+                const newNameARFF = (document.getElementById('inspNameARFF').value || '').trim();
+                const newNameAMC = (document.getElementById('inspNameAMC').value || '').trim();
+
+                const sigEMENew = !this.isCanvasBlank('sigEME') ? (this.canvases['sigEME']?.toDataURL() || null) : null;
+                const sigARFFNew = !this.isCanvasBlank('sigARFF') ? (this.canvases['sigARFF']?.toDataURL() || null) : null;
+                const sigAMCNew = !this.isCanvasBlank('sigAMC') ? (this.canvases['sigAMC']?.toDataURL() || null) : null;
+
+                inspNames = {
+                    eme: newNameEME || oldNames.eme || '',
+                    arff: newNameARFF || oldNames.arff || '',
+                    amc: newNameAMC || oldNames.amc || ''
+                };
+
+                sigs = {
+                    eme: sigEMENew || oldSigs.eme || null,
+                    arff: sigARFFNew || oldSigs.arff || null,
+                    amc: sigAMCNew || oldSigs.amc || null
+                };
+
+                inspectorComplete = Boolean(
+                    inspNames.eme && inspNames.arff && inspNames.amc &&
+                    sigs.eme && sigs.arff && sigs.amc
+                );
             }
 
             const checklist = [];
@@ -779,8 +994,18 @@
                 const note = document.querySelector(`input[name="note_${i}"]`)?.value || '';
                 checklist.push({ name: CHECKLIST_ITEMS[i], val: val, note: note });
             }
-            const payload = { date: document.getElementById('testDate').value, asset_id: assetId, checklist: checklist, status: status, notes: document.getElementById('inspectionNotes').value || '', inspector_names: inspNames, signatures: sigs };
-            const id = document.getElementById('editInspectionId').value;
+
+            const payload = {
+                date: document.getElementById('testDate').value,
+                asset_id: assetId,
+                checklist: checklist,
+                status: status,
+                notes: document.getElementById('inspectionNotes').value || '',
+                inspector_names: inspNames,
+                signatures: sigs,
+                inspector_complete: inspectorComplete
+            };
+
             const { error } = id ? await this.sb.from('inspections').update(payload).eq('id', id) : await this.sb.from('inspections').insert([payload]);
             this.loading(false);
             if(error) alert("Error: " + error.message); else { alert("Data Tersimpan!"); this.nav('dashboard'); }
@@ -803,7 +1028,35 @@
                 if(noteEl) noteEl.value = c.note || '';
             });
             document.getElementById('inspectionNotes').value = data.notes || '';
-            if(data.status === 'Lulus') { document.getElementById('resPass').checked = true; this.toggleSignatures(); document.getElementById('inspNameEME').value = data.inspector_names.eme; document.getElementById('inspNameARFF').value = data.inspector_names.arff; document.getElementById('inspNameAMC').value = data.inspector_names.amc; } else { document.getElementById('resFail').checked = true; this.toggleSignatures(); }
+
+            if(data.status === 'Lulus') {
+                document.getElementById('resPass').checked = true;
+                this.toggleSignatures();
+
+                const names = data.inspector_names || {};
+                const sigs = data.signatures || {};
+
+                document.getElementById('inspNameEME').value = names.eme || '';
+                document.getElementById('inspNameARFF').value = names.arff || '';
+                document.getElementById('inspNameAMC').value = names.amc || '';
+
+                setTimeout(() => {
+                    this.initCanvas('sigEME');
+                    this.initCanvas('sigARFF');
+                    this.initCanvas('sigAMC');
+
+                    this.drawSignatureToCanvas('sigEME', sigs.eme);
+                    this.drawSignatureToCanvas('sigARFF', sigs.arff);
+                    this.drawSignatureToCanvas('sigAMC', sigs.amc);
+
+                    this.setSignatureFieldState('eme', !!sigs.eme);
+                    this.setSignatureFieldState('arff', !!sigs.arff);
+                    this.setSignatureFieldState('amc', !!sigs.amc);
+                }, 120);
+            } else {
+                document.getElementById('resFail').checked = true;
+                this.toggleSignatures();
+            }
         },
 
         showAssetModal: function(id = null) {
@@ -868,6 +1121,54 @@
             }
         },
 
+        isCanvasBlank: function(canvasId) {
+            const c = this.canvases[canvasId] || document.getElementById(canvasId);
+            if (!c) return true;
+            const ctx = c.getContext('2d');
+            const pixelBuffer = new Uint32Array(ctx.getImageData(0, 0, c.width, c.height).data.buffer);
+            return !pixelBuffer.some(color => color !== 0);
+        },
+
+        drawSignatureToCanvas: function(canvasId, dataUrl) {
+            if (!dataUrl) return;
+            const c = document.getElementById(canvasId);
+            if (!c) return;
+            const ctx = c.getContext('2d');
+            const img = new Image();
+            img.onload = () => {
+                ctx.clearRect(0, 0, c.width, c.height);
+                ctx.drawImage(img, 0, 0, c.width, c.height);
+            };
+            img.src = dataUrl;
+        },
+
+        setSignatureFieldState: function(key, locked) {
+            const map = {
+                eme: { nameId: 'inspNameEME', sigId: 'sigEME' },
+                arff: { nameId: 'inspNameARFF', sigId: 'sigARFF' },
+                amc: { nameId: 'inspNameAMC', sigId: 'sigAMC' }
+            };
+            const cfg = map[key];
+            if (!cfg) return;
+
+            const nameEl = document.getElementById(cfg.nameId);
+            const canvasEl = document.getElementById(cfg.sigId);
+            if (nameEl) nameEl.disabled = locked;
+            if (canvasEl) {
+                canvasEl.style.pointerEvents = locked ? 'none' : 'auto';
+                canvasEl.style.opacity = locked ? '0.7' : '1';
+            }
+
+            const card = canvasEl ? canvasEl.closest('.card') : null;
+            const clearBtn = card ? card.querySelector('button[onclick*="' + cfg.sigId + '"]') : null;
+            if (clearBtn) {
+                clearBtn.disabled = locked;
+                clearBtn.classList.toggle('d-none', locked);
+            }
+
+            this.signatureLocks[cfg.sigId] = !!locked;
+        },
+
         initCanvas: function(id) {
             const c = document.getElementById(id); if (!c) return;
             // PERBAIKAN: Pastikan parent punya lebar, jika 0 (hidden), jangan set dulu
@@ -878,8 +1179,23 @@
             const ctx = c.getContext('2d'); ctx.lineWidth = 2; ctx.lineCap = "round"; ctx.strokeStyle = "#000";
             let d = false;
             const getPos = (e) => { const rect = c.getBoundingClientRect(); return {x: (e.touches?e.touches[0].clientX:e.clientX)-rect.left, y: (e.touches?e.touches[0].clientY:e.clientY)-rect.top}; }
-            const start = (e) => { if(e.target == c) e.preventDefault(); d = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); };
-            const move = (e) => { if(e.target == c) e.preventDefault(); if(d) { const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); } };
+            const start = (e) => {
+                if (this.signatureLocks[id]) return;
+                if(e.target == c) e.preventDefault();
+                d = true;
+                const p = getPos(e);
+                ctx.beginPath();
+                ctx.moveTo(p.x, p.y);
+            };
+            const move = (e) => {
+                if (this.signatureLocks[id]) return;
+                if(e.target == c) e.preventDefault();
+                if(d) {
+                    const p = getPos(e);
+                    ctx.lineTo(p.x, p.y);
+                    ctx.stroke();
+                }
+            };
             const end = (e) => { if(e.target == c) e.preventDefault(); d = false; };
             
             // Re-bind events (untuk memastikan tidak double bind, bisa pakai removeEventListener dulu idealnya, tapi ini ok untuk simple use)
@@ -888,8 +1204,22 @@
             this.canvases[id] = c;
         },
         
-        clearSig: function(id) { const c = this.canvases[id]; if(c) c.getContext('2d').clearRect(0,0,c.width,c.height); },
-        resetForm: function() { document.getElementById('inspectionForm').reset(); document.getElementById('editInspectionId').value = ''; document.getElementById('resFail').checked = true; this.toggleSignatures(); ['sigEME', 'sigARFF', 'sigAMC'].forEach(id => this.clearSig(id)); },
+        clearSig: function(id) {
+            if (this.signatureLocks[id]) return;
+            const c = this.canvases[id];
+            if(c) c.getContext('2d').clearRect(0,0,c.width,c.height);
+        },
+        resetForm: function() {
+            document.getElementById('inspectionForm').reset();
+            document.getElementById('editInspectionId').value = '';
+            document.getElementById('resFail').checked = true;
+            this.signatureLocks = { sigEME: false, sigARFF: false, sigAMC: false };
+            this.setSignatureFieldState('eme', false);
+            this.setSignatureFieldState('arff', false);
+            this.setSignatureFieldState('amc', false);
+            this.toggleSignatures();
+            ['sigEME', 'sigARFF', 'sigAMC'].forEach(id => this.clearSig(id));
+        },
         
         printReport: async function(id) {
             this.loading(true);
